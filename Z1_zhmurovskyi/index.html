@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="sk">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>O mne — Roman Zhmurovskyi</title>
+    <link rel="stylesheet" href="css/main.css">     <!-- pripojenie style v html cez css -->
+</head>
+
+
+<body>
+<header class="my-header">
+    <h1 class="my-title">Osobná stránka — Roman Zhmurovskyi</h1>
+
+    <nav aria-label="Hlavné menu"> <!-- aria-label = atribút pre čítačky obrazovky, pomáha prístupnosti, navigácia -->
+        <ul class="main_menu">
+            <li><a href="index.html" aria-current="page">O&nbsp;mne</a></li>
+            <li><a href="zivotopis.html">Životopis</a></li>
+            <li><a href="rozvrh.html">Môj&nbsp;rozvrh</a></li>
+            <li><a href="interaktivny.html">Interaktívny&nbsp;obrázok</a></li>
+        </ul>
+    </nav>
+</header>
+
+<main>
+    <!-- <section> = blok obsahu -->
+    <section class="hero" aria-label="O mne"> <!-- je, ako „imaginary kontajner“, ktorý skupí viacero prvkov dohromady, ale s tým, že by mal mať aj nejaký význam -->
+        <div class="hero-content"> <!-- <div> = prázdna krabica / miesto do ktorého vložíme obsah, class = dáva elementu menovku -->
+
+            <img src="assets/img/roman.jpg"
+                 alt="Roman Zhmurovskyi – študent aplikovanej informatiky"
+                 class="profile-photo float-left">
+
+            <!-- target="_blank" = otvorí odkaz v novom okne/karte -->
+            <!-- rel="noopener noreferrer" = bezpečnostné opatrenie;
+                 - noopener zabráni prístupu novej stránky k objektu window.opener
+                 - noreferrer skryje referenciu (odkiaľ prišiel návštevník) -->
+            <h2><a href="https://www.instagram.com/schmurkooo/" target="_blank" rel="noopener noreferrer">Kto som</a></h2>
+
+            <p>
+                Som študent aplikovanej informatiky, ktorý má rád nové technológie a ich praktické využitie.
+                Fascinuje ma webový vývoj, dátové analýzy a umelej inteligencii sa snažím porozumieť čo najviac,
+                pretože verím, že tieto oblasti formujú budúcnosť.
+            </p>
+
+            <p>
+                Okrem školy sa aktívne venujem silovému tréningu a zdravému životnému štýlu.
+                Cvičenie mi pomáha nielen fyzicky, ale aj psychicky – učí ma disciplíne a vytrvalosti.
+                Vo voľnom čase rád čítam knihy o kvantitatívnom investovaní a osobnostnom rozvoji,
+                ktoré mi otvárajú nové pohľady na svet.
+            </p>
+
+            <p>
+                Zaujímam sa aj o cestovanie, spoznávanie nových miest a kultúr, pretože verím,
+                že práve skúsenosti a zážitky nám dávajú najviac.
+                Tiež sa snažím rozvíjať svoje soft skills – komunikáciu, tímovú spoluprácu a time management,
+                čo považujem za rovnako dôležité ako technické vedomosti.
+            </p>
+
+            <!-- "subjects" = nečíslovaný zoznam s odrážkami -->
+            <h3>Moje predmety na univerzite</h3>
+            <ul class="subjects">
+                <li>💻 Webové technológie</li>
+                <li>⚙️ Operačné systémy</li>
+                <li>📊 Analýza algoritmov</li>
+                <li>🛠️ Softvérové inžinierstvo</li>
+                <li>📐 Lineárna algebra 2</li>
+            </ul>
+
+            <aside class="quote" aria-label="Quote"> <!-- aria-label="Quote" dá elementu viditeľný názov pre čítačky obrazovky -->
+                „Build your own pyramids, write your own hieroglyphs. Do something.“
+            </aside>
+
+        </div>
+    </section>
+</main>
+
+<footer class="my-footer">
+    <small>© 2025 Roman Zhmurovskyi —
+        <a href="mailto:xzhmurovskyi@stuba.sk">xzhmurovskyi@stuba.sk</a>
+    </small>
+</footer>
+
+</body>
+</html>
+
+
+<!--
+ Kde a co precital, ako je možne použiť:
+ https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/li
+ https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/section
+ https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/div
+ https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Global_attributes/class
+ https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/aside
+ -->
