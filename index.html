@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+    <meta charset="UTF-8">
+    <title>Gantt Planner</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link rel="stylesheet" href="css/style.css">
+
+    <!-- Vue 3 (framework) -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+    <script defer src="js/app.js"></script>
+</head>
+<body>
+<div id="app"
+     class="gantt-app"
+     :class="{'gantt-app--dark': ui.theme === 'dark', 'gantt-app--light': ui.theme === 'light'}"
+     v-cloak>
+
+    <!-- HEADER -->
+    <header class="gantt-app__header">
+        <div class="gantt-app__title-group">
+            <h1 class="gantt-app__title">{{ t('app_title') }}</h1>
+            <p class="gantt-app__subtitle">
+                {{ t('today_is') }} {{ formattedToday }}
+            </p>
+        </div>
+
+        <div class="gantt-toolbar gantt-app__toolbar">
+            <div class="gantt-toolbar__group">
+                <label class="gantt-toolbar__label">{{ t('language') }}</label>
+                <select class="gantt-toolbar__select" v-model="ui.lang" @change="onLangChange">
+                    <option value="sk">SK</option>
+                    <option value="en">EN</option>
+                </select>
+            </div>
+
+            <div class="gantt-toolbar__group">
+                <label class="gantt-toolbar__label">{{ t('theme') }}</label>
+                <button class="gantt-toolbar__toggle"
+                        @click="toggleTheme">
+                    {{ ui.theme === 'light' ? t('light_mode') : t('dark_mode') }}
+                </button>
+            </div>
+
+            <div class="gantt-toolbar__group">
+                <label class="gantt-toolbar__label">{{ t('zoom') }}</label>
+                <select class="gantt-toolbar__select" v-model="ui.zoom">
+                    <option value="day">{{ t('zoom_day') }}</option>
+                    <option value="week">{{ t('zoom_week') }}</option>
+                    <option value="month">{{ t('zoom_month') }}</option>
+                    <option value="quarter">{{ t('zoom_quarter') }}</option>
+                </select>
+            </div>
+
+            <div class="gantt-toolbar__group">
+                <label class="gantt-toolbar__label">
+                    <input type="checkbox" v-model="ui.printShowDate">
+                    {{ t('print_show_date') }}
+                </label>
+                <button class="gantt-toolbar__button" @click="printDiagram">
+                    {{ t('print') }}
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN -->
+    <main class="gantt-app__main">
+
+        <!-- LEFT PANEL -->
+        <section class="gantt-panel gantt-panel--left">
+
+            <div class="panel-block panel-block--range">
+                <h2 class="panel-block__title">{{ t('range_title') }}</h2>
+                <div class="panel-block__row">
+                    <label class="panel-block__label">
+                        {{ t('start_date') }}
+                        <input type="date" v-model="settings.startDate"
+                               @change="onRangeChange"
+                               class="panel-block__input">
+                    </label>
+                </div>
+                <div class="panel-block__row">
+                    <label class="panel-block__label">
+                        {{ t('end_date') }}
+                        <input type="date" v-model="settings.endDate"
+                               @change="onRangeChange"
+                               class="panel-block__input">
+                    </label>
+                </div>
+            </div>
+
+            <div class="panel-block panel-block--task-form">
+                <h2 class="panel-block__title">{{ t('task_form_title') }}</h2>
+                <label class="panel-block__label">
+                    {{ t('task_name') }}
+                    <input v-model="taskForm.name" class="panel-block__input" type="text">
+                </label>
+
+                <label class="panel-block__label">
+                    {{ t('task_start') }}
+                    <input v-model="taskForm.start" class="panel-block__input" type="date">
+                </label>
+
+                <label class="panel-block__label">
+                    {{ t('task_end') }}
+                    <input v-model="taskForm.end" class="panel-block__input" type="date">
+                </label>
+
+                <label class="panel-block__label">
+                    {{ t('task_color') }}
+                    <input v-model="taskForm.color" class="panel-block__input panel-block__input--color" type="color">
+                </label>
+
+                <label class="panel-block__label">
+                    {{ t('task_progress') }} (%)
+                    <input v-model.number="taskForm.progress" class="panel-block__input" type="number" min="0" max="100">
+                </label>
+
+                <label class="panel-block__label">
+                    {{ t('task_tags') }}
+                    <input v-model="taskForm.tags" class="panel-block__input" type="text"
+                           :placeholder="t('task_tags_placeholder')">
+                </label>
+
+                <div class="panel-block__row panel-block__row--actions">
+                    <button class="panel-block__button panel-block__button--primary"
+                            @click="submitTask">
+                        {{ taskForm.editId ? t('update_task') : t('add_task') }}
+                    </button>
+
+                    <button class="panel-block__button panel-block__button--ghost"
+                            @click="resetTaskForm">
+                        {{ t('clear_form') }}
+                    </button>
+                </div>
+            </div>
+
+            <div class="panel-block panel-block--filters">
+                <h2 class="panel-block__title">{{ t('filters_title') }}</h2>
+                <label class="panel-block__label">
+                    {{ t('search') }}
+                    <input v-model="filters.search" class="panel-block__input" type="text">
+                </label>
+
+                <label class="panel-block__label">
+                    {{ t('filter_tag') }}
+                    <input v-model="filters.tag" class="panel-block__input" type="text"
+                           :placeholder="t('filter_tag_placeholder')">
+                </label>
+            </div>
+
+            <div class="panel-block panel-block--io">
+                <h2 class="panel-block__title">{{ t('import_export_title') }}</h2>
+
+                <div class="panel-block__row">
+                    <button class="panel-block__button panel-block__button--primary" @click="exportJson">
+                        {{ t('export_json') }}
+                    </button>
+                </div>
+
+                <div class="panel-block__row">
+                    <label class="panel-block__label panel-block__label--file">
+                        {{ t('import_json') }}
+                        <input type="file" accept="application/json" @change="importJson">
+                    </label>
+                </div>
+            </div>
+
+            <div class="panel-block panel-block--legend">
+                <h2 class="panel-block__title">{{ t('legend_title') }}</h2>
+                <div class="legend">
+                    <div class="legend__item"
+                         v-for="(item, index) in legend"
+                         :key="item.id">
+                        <input class="legend__color" type="color" v-model="item.color" @change="saveLegend">
+                        <input class="legend__name" type="text" v-model="item.label" @blur="saveLegend"
+                               :placeholder="t('legend_label_placeholder')">
+                        <button class="legend__remove" @click="removeLegendItem(index)">×</button>
+                    </div>
+                    <button class="legend__add" @click="addLegendItem">{{ t('legend_add') }}</button>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- RIGHT PANEL -->
+        <section class="gantt-panel gantt-panel--right">
+
+            <div class="gantt-grid">
+
+                <!-- SIDEBAR -->
+                <div class="gantt-grid__sidebar">
+                    <div class="gantt-grid__sidebar-header">
+                        {{ t('tasks') }}
+                    </div>
+
+                    <div class="gantt-grid__sidebar-body">
+
+                        <div class="gantt-task-row"
+                             v-for="(task, index) in visibleTasks"
+                             :key="task.id"
+                             @click="selectTask(task)"
+                             :class="{
+                                'gantt-task-row--highlight': isTaskHighlighted(task),
+                                'gantt-task-row--active': selectedTaskId === task.id
+                             }">
+
+                            <div class="gantt-task-row__title">
+                                <span contenteditable="true"
+                                      class="gantt-task-row__title-text"
+                                      @blur="onInlineEdit(task, 'name', $event)">
+                                    {{ task.name }}
+                                </span>
+                            </div>
+
+                            <div class="gantt-task-row__meta">
+                                <span class="gantt-task-row__date">
+                                    <span contenteditable="true"
+                                          @blur="onInlineEdit(task, 'start', $event)">
+                                        {{ task.start }}
+                                    </span>
+                                    –
+                                    <span contenteditable="true"
+                                          @blur="onInlineEdit(task, 'end', $event)">
+                                        {{ task.end }}
+                                    </span>
+                                </span>
+
+                                <span class="gantt-task-row__progress">
+                                    <span contenteditable="true"
+                                          @blur="onInlineEdit(task, 'progress', $event)">
+                                        {{ task.progress }}
+                                    </span>%
+                                </span>
+
+                                <span class="gantt-task-row__tags">
+                                    <span contenteditable="true"
+                                          @blur="onInlineEdit(task, 'tags', $event)">
+                                        {{ task.tags.join(', ') }}
+                                    </span>
+                                </span>
+                            </div>
+
+                            <button class="gantt-task-row__edit" @click.stop="editTask(task)">✏️</button>
+                            <button class="gantt-task-row__delete" @click.stop="deleteTask(task.id)">🗑</button>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- TIMELINE (NO SCROLLS AT ALL) -->
+                <div class="gantt-grid__timeline">
+
+                    <div class="gantt-timeline">
+
+                        <div class="gantt-timeline__header"
+                             :style="{gridTemplateColumns: timelineGridTemplate}">
+                            <div class="gantt-timeline__cell"
+                                 v-for="cell in timelineCells"
+                                 :key="cell.key">
+                                {{ cell.label }}
+                            </div>
+                        </div>
+
+                        <div class="gantt-timeline__today-marker"
+                             v-if="todayPosition !== null"
+                             :style="{ left: todayPosition + '%' }"></div>
+
+                        <div class="gantt-timeline__body" style="overflow: hidden !important;">
+                            <div class="gantt-timeline__row"
+                                 v-for="task in visibleTasks"
+                                 :key="task.id">
+                                <div class="gantt-timeline__bar-wrapper">
+                                    <div class="gantt-timeline__bar"
+                                         :class="{'gantt-timeline__bar--active': selectedTaskId === task.id}"
+                                         :style="getTaskBarStyle(task)"
+                                         @click="selectTask(task)">
+                                        <div class="gantt-timeline__bar-progress"
+                                             :style="{ width: task.progress + '%' }"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+</div>
+</body>
+</html>
