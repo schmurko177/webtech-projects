@@ -1,0 +1,891 @@
+<!doctype html>
+<html lang="sk">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>FORM</title>
+    <style>
+
+        /* layout variables (sizes for columns, card, image focus) */
+        :root {
+            --art-x: 62%;        /* image focus left/right */
+            --card-w: 1280px;    /* max width of the white card */
+            --col-form: 1.5fr;   /* size of form column */
+            --col-art: 1.1fr;    /* size of picture column */
+            --mobile-art: block; /* show image on mobile (or 'none') */
+        }
+
+        /* basic reset */
+        * { box-sizing: border-box; }
+
+        /* make page full height */
+        html, body { height: 100%; }
+
+        /* page area (light gray background) */
+        body {
+            margin: 0;
+            min-height: 100dvh;                  /* full screen height */
+            display: flex;                       /* center the card */
+            justify-content: center;             /* center horizontally */
+            align-items: flex-start;             /* stick to top */
+            padding: 40px 0;                     /* space above/below */
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;                 /* light gray page bg */
+            overflow-x: hidden;                   /* no side scroll */
+        }
+
+        /* the white card (the main layout box) */
+        .wrap {
+            width: min(var(--card-w), 96vw);     /* card width */
+            background: #fff;                    /* white card */
+            border-radius: 18px;                 /* round corners */
+            box-shadow: 0 18px 50px rgba(13,27,42,.18); /* soft shadow */
+            overflow: hidden;                    /* clip children */
+            display: grid;                       /* 2 columns */
+            grid-template-columns: var(--col-form) var(--col-art); /* form + image */
+            column-gap: 0;                       /* no gap */
+        }
+
+        /* inside padding for the form side of the card */
+        .panel { padding: 34px 36px; }
+
+        /* big title text */
+        h1 {
+            margin: 0 0 18px;
+            font-size: 32px;  /* font size of title */
+            color: #0d1b2a;
+        }
+
+        /* rows with two fields */
+        .grid, .row
+        {
+            display: grid;
+            grid-template-columns: 1fr 1fr;      /* two equal columns */
+            gap: 12px;                           /* space between */
+        }
+
+        .row { margin-top: 12px; }             /* space between rows */
+
+        /* small label above inputs */
+        .label
+        {
+            font-size: 12px;                     /* label size */
+            color: #5b6b7a;
+            display: block;
+            margin-bottom: 6px;                  /* space before input */
+        }
+
+        /* small "required" tag */
+        .req-badge
+        {
+            display: inline-block;
+            background: #fdecea;                 /* light red bg */
+            color: #b00020;                      /* red text */
+            border: 1px solid #f5c2c0;
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 6px;
+            margin-left: 8px;
+            vertical-align: 1px;
+        }
+
+        /* inputs, selects, textarea look */
+        input[type="text"],
+        input[type="date"],
+        input[type="number"],
+        select,
+        textarea {
+            width: 100%;                         /* field fills column */
+            padding: 10px 12px;
+            border: 1px solid #d7dde3;
+            border-radius: 10px;
+            outline: none;
+            background: #fff;                    /* white field bg */
+            color: #0d1b2a;
+            transition: border-color .2s, box-shadow .2s;
+        }
+
+        /* textarea height */
+        textarea { min-height: 96px; resize: vertical; }
+
+        /* blue focus glow */
+        input:focus, select:focus, textarea:focus
+        {
+            border-color: #3b5bdb;
+            box-shadow: 0 0 0 3px rgba(59,91,219,.12);
+        }
+
+        /* red error glow */
+        .error input, .error select, .error textarea
+        {
+            border-color: #b00020;
+            box-shadow: 0 0 0 3px rgba(176,0,32,.12);
+        }
+
+        /* radio/checkbox group area */
+        fieldset
+        {
+            margin: 12px 0 0;
+            border: 0;
+            padding: 0;
+            display: flex;
+            gap: 14px;
+            flex-wrap: wrap;                     /* wrap on small screens */
+        }
+
+        fieldset legend { font-weight: 700; margin-bottom: 6px; color: #0d1b2a; }
+
+        /* helper/error text under fields */
+        .hint { min-height: 18px; color: #b00020; font-size: 13px; margin-top: 6px; }
+
+        /* small line for counters etc. */
+        .meta
+        {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-top: 6px; font-size: 12px; color: #6a7683; min-height: 18px;
+        }
+
+        /* row with submit + reset buttons */
+        .actions
+        {
+            margin-top: 14px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;      /* two buttons */
+            gap: 10px;
+        }
+
+        /* buttons */
+        button, .btn
+        {
+            width: 100%; padding: 12px 16px;
+            border-radius: 12px; border: 0;
+            background: #3b5bdb; color: #fff;    /* blue button */
+            font-weight: 700; cursor: pointer;
+        }
+
+        button:disabled { opacity: .6; cursor: not-allowed; }
+        .btn.secondary { background: #e9eef7; color: #183153; }
+
+        /* right side area for the big photo inside the card */
+        .art
+        {
+            position: relative;
+            min-height: 640px;                   /* size of photo area */
+            background: transparent;
+        }
+
+        /* the big photo itself */
+        .art img
+        {
+            position: absolute; inset: 0;        /* fill the area */
+            width: 100%; height: 100%;           /* full size of area */
+            object-fit: cover;                    /* crop nicely */
+            object-position: var(--art-x) 38%;   /* photo focus point */
+            display: block;
+        }
+
+        /* (not used now) overlay over photo */
+        .overlay { display: none; }
+
+        /* price text near selects */
+        #price
+        {
+            margin-top: 28px;
+            font-weight: 700;
+            font-size: 16px;                      /* font size of price */
+            color: #0d1b2a;
+        }
+
+        /* recap box inside the white card */
+        #summary
+        {
+            margin-top: 16px; padding: 12px 14px;
+            border: 1px dashed #d7dde3; border-radius: 10px;
+            background: #fbfcff;                  /* very light blue bg */
+            color: #0d1b2a; font-size: 14px; line-height: 1.5;
+        }
+
+        /* single error line near buttons */
+        .form-error
+        {
+            color: #b00020; font-weight: 700; margin: 10px 0 0;
+            min-height: 18px; grid-column: 1 / -1; /* spans whole form */
+        }
+
+        /* ===== Modal preview (popup review) ===== */
+        .modal-backdrop
+        {
+            position: fixed;                 /* stick to viewport */
+            inset: 0;                        /* cover whole screen */
+            background: rgba(13,27,42,.55);  /* dark see-through overlay */
+            display: none;                   /* hidden by default (JS sets to flex) */
+            z-index: 1000;                   /* on top of page */
+            align-items: center;             /* center modal vertically (needs flex) */
+            justify-content: center;         /* center modal horizontally (needs flex) */
+            padding: 16px;                   /* space from screen edges */
+        }
+
+        .modal
+        {
+            width: min(720px, 96vw);         /* popup size (max 720px) */
+            background: #fff;                /* white box */
+            border-radius: 14px;             /* rounded corners */
+            box-shadow: 0 20px 80px rgba(0,0,0,.35); /* strong shadow */
+            padding: 20px;                   /* inner padding */
+        }
+
+        .modal h3{margin: 0 0 10px;}                /* space under title */
+
+
+        .modal .modal-body
+        {
+            max-height: 60vh;                /* limit height (60% of screen) */
+            overflow: auto;                  /* scroll inside if too long */
+            border: 1px dashed #e3e7ef;      /* light dashed frame */
+            border-radius: 12px;             /* rounded inner box */
+            padding: 12px;                   /* inner padding */
+            background: #fbfcff;             /* very light bg */
+        }
+
+        .modal .modal-actions
+        {
+            margin-top: 14px;                /* space above buttons */
+            display: grid;                   /* 2 buttons side by side */
+            grid-template-columns: 1fr 1fr;  /* equal width buttons */
+            gap: 10px;                       /* space between buttons */
+        }
+
+        /* ===== desktop tweak: a bit more padding in the form panel ===== */
+        @media (min-width:1100px)
+        {
+            .panel { padding: 36px 42px; }   /* larger inner padding */
+        }
+
+        /* ===== mobile layout: stack columns, smaller paddings ===== */
+        @media (max-width:860px){
+            :root
+            {
+                --col-form: 1fr;               /* one column */
+                --col-art: 1fr;                /* (unused when stacked) */
+                --card-w: 96vw;                /* card fits screen */
+            }
+
+            .wrap
+            {
+                grid-template-columns: 1fr;    /* single column layout */
+                grid-template-areas: "art" "form"; /* image then form */
+            }
+
+            .panel{ padding: 26px 22px; }    /* tighter padding on mobile */
+
+            .grid, .row{ grid-template-columns: 1fr; } /* fields full width */
+
+            .art
+            {
+                min-height: 360px;             /* smaller photo height */
+            }
+        }
+
+    </style>
+</head>
+
+<body>
+<div class="wrap"> <!-- gives it the CSS class wrap -->
+    <!-- ĽAVO: FORMULÁR -->
+    <div class="panel">
+        <h2 class="main-title">OBJEDNÁVKA PRIESTORU A VYBAVENIA PRE E ŠPORT</h2>
+        <h1>Sign up</h1>
+
+        <form id="f" novalidate autocomplete="off"
+              action="https://form2mail.iolab.sk/form2mail.php"
+              method="post" enctype="multipart/form-data">
+
+            <!-- form2mail hidden -->
+            <input type="hidden" name="apikey"  id="apikey"  value="b8550c6bf0fae9bf0b0a099d75c1cd22">
+            <input type="hidden" name="from"    id="fromEmail"  value="">
+            <input type="hidden" name="sender"  id="senderName" value="">
+            <input type="hidden" name="to"      id="toEmail"    value="feistu01@gmail.com">
+            <input type="hidden" name="subject" id="subject"    value="">
+            <input type="hidden" name="redirectOk"    value="https://webte1.fei.stuba.sk/~xzhmurovskyi/cviko2">
+            <input type="hidden" name="redirectFalse" value="https://webte1.fei.stuba.sk/~xzhmurovskyi/cviko2">
+
+            <!-- (1) Osobné údaje -->
+            <div class="grid">
+                <div>
+                    <label class="label">Meno <span class="req-badge">povinné</span></label>
+                    <input name="first" id="first" type="text" required maxlength="40">
+                    <div class="meta"><span class="count" data-for="first">0 / 40</span></div>
+                    <div class="hint" id="hint-first"></div>
+                </div>
+                <div>
+                    <label class="label">Priezvisko <span class="req-badge">povinné</span></label>
+                    <input name="last" id="last" type="text" required maxlength="40">
+                    <div class="meta"><span class="count" data-for="last">0 / 40</span></div>
+                    <div class="hint" id="hint-last"></div>
+                </div>
+            </div>
+
+            <fieldset aria-label="Pohlavie">
+                <legend>Pohlavie <span class="req-badge">povinné</span></legend>
+                <label><input type="radio" name="gender" value="M" required> Muž</label>
+                <label><input type="radio" name="gender" value="F"> Žena</label>
+                <div class="hint" id="hint-gender"></div>
+            </fieldset>
+
+            <div class="row">
+                <div>
+                    <label class="label">Dátum narodenia <span class="req-badge">povinné</span></label>
+                    <input id="dob" name="dob" type="date" required>
+                    <div class="hint" id="hint-dob"></div>
+                </div>
+                <div>
+                    <label class="label">Vek <span class="req-badge">povinné</span></label>
+                    <input id="age" name="age" type="number" required aria-describedby="e">
+                    <div class="hint" id="e"></div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div>
+                    <label class="label">Telefón — predvoľba</label>
+                    <select id="telCode" name="telCode">
+                        <option value="+421">+421 (SK)</option>
+                        <option value="+420">+420 (CZ)</option>
+                        <option value="+380">+380 (UA)</option>
+                        <option value="+48">+48 (PL)</option>
+                        <option value="+43">+43 (AT)</option>
+                        <option value="+49">+49 (DE)</option>
+                        <option value="+36">+36 (HU)</option>
+                        <option value="+40">+40 (RO)</option>
+                        <option value="+381">+381 (RS)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="label">Telefón — číslo <span class="req-badge">povinné</span></label>
+                    <input id="tel" name="tel" type="text" inputmode="numeric" required maxlength="15" placeholder="905123456">
+                    <div class="meta"><span class="count" data-for="tel">0 / 15</span></div>
+                    <div class="hint" id="hint-tel"></div>
+                </div>
+            </div>
+
+            <!-- (2) Hra -> Miestnosť -> Počet -->
+            <div class="row">
+                <div>
+                    <label class="label">1. Hra <span class="req-badge">povinné</span></label>
+                    <select id="game" name="game" required>
+                        <option value="">-- Vyberte hru --</option>
+                        <option value="cs2">Counter-Strike 2</option>
+                        <option value="valorant">Valorant</option>
+                        <option value="lol">League of Legends</option>
+                        <option value="rl">Rocket League (PC)</option>
+                        <option value="hlvr">Half-Life VR</option>
+                        <option value="ps">PlayStation (konzola)</option>
+                        <option value="other">Iná, uveďte akú</option>
+                    </select>
+                    <div id="customGameWrap" style="display:none; margin-top:12px;">
+                        <label class="label">Zadajte názov inej hry <span class="req-badge">povinné</span></label>
+                        <input type="text" id="customGame" name="customGame" maxlength="40">
+                        <div class="meta"><span class="count" data-for="customGame">0 / 40</span></div>
+                        <div class="hint" id="hint-customGame"></div>
+                    </div>
+                    <div class="hint" id="hint-game"></div>
+                </div>
+                <div>
+                    <label class="label">2. Miestnosť / Priestor <span class="req-badge">povinné</span></label>
+                    <select id="room" name="room" required disabled>
+                        <option value="">-- Najprv vyberte hru --</option>
+                    </select>
+                    <div class="hint" id="hint-room"></div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div>
+                    <label class="label" id="unitsLabel">3. Počet osôb <span class="req-badge">povinné</span></label>
+                    <select id="units" name="units" required disabled>
+                        <option value="">-- Najprv vyberte miestnosť --</option>
+                    </select>
+                    <div class="hint" id="hint-units"></div>
+                </div>
+                <div><div id="price">Cena celkom: —</div></div>
+            </div>
+
+            <!-- (3) Email + dátum/čas -->
+            <div class="row">
+                <div>
+                    <label class="label">Emailová adresa <span class="req-badge">povinné</span></label>
+                    <input id="email" name="email" type="text" placeholder="meno@domena.sk" required maxlength="60"
+                           pattern="^[a-zA-Z0-9._%+-]{3,}@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$">
+                    <div class="meta"><span class="count" data-for="email">0 / 60</span></div>
+                    <div class="hint" id="hint-email"></div>
+                </div>
+                <div></div>
+            </div>
+
+            <div class="row">
+                <div>
+                    <label class="label">Dátum a čas prenájmu <span class="req-badge">povinné</span></label>
+                    <input id="rentDateTime" name="rentDateTime" type="datetime-local" required>
+                    <div class="hint" id="hint-rentDateTime"></div>
+                </div>
+                <div></div>
+            </div>
+
+            <!-- (5) Vybavenie -->
+            <fieldset aria-label="Výber vybavenia" style="margin-top:16px;">
+                <legend>Požičať si vybavenie (nepovinné)</legend>
+                <label><input type="checkbox" name="gear" value="VR Headset – Valve Index"> VR Headset – Valve Index</label><br>
+                <label><input type="checkbox" name="gear" value="VR Headset – Meta Quest 3"> VR Headset – Meta Quest 3</label><br>
+                <label><input type="checkbox" name="gear" value="Klávesnica – Steel A Pro"> Klávesnica – Steel AP Pro</label><br>
+                <label><input type="checkbox" name="gear" value="Myš – Logitech G Pro X Superlight"> Myš – Logitech G Pro X Superlight</label><br>
+                <label><input type="checkbox" name="gear" value="Slúchadlá – HyperX Cloud"> Slúchadlá – HyperX Cloud</label><br>
+                <label><input type="checkbox" name="gear" value="Monitor – ASUS ROG Swift 360Hz"> Monitor – ASUS ROG Swift 360Hz</label>
+            </fieldset>
+
+            <fieldset aria-label="Spôsob platby" style="margin-top:20px;">
+                <legend>Spôsob platby <span class="req-badge">povinné</span></legend>
+                <label><input type="radio" name="payment" value="invoice" required> Platba na faktúru</label>
+                <label><input type="radio" name="payment" value="card"> Platba kartou</label>
+                <label><input type="radio" name="payment" value="crypto"> Kryptopeňaženka</label>
+                <label><input type="radio" name="payment" value="cash"> V hotovosti na mieste</label>
+                <div class="hint" id="hint-payment"></div>
+            </fieldset>
+
+            <!-- Fakturačné polia -->
+            <div id="invoiceDetails" style="display:none; margin-top:10px;">
+                <div class="row">
+                    <div>
+                        <label class="label">Názov firmy <span class="req-badge">povinné</span></label>
+                        <input type="text" id="companyName" name="companyName" maxlength="60">
+                        <div class="meta"><span class="count" data-for="companyName">0 / 60</span></div>
+                        <div class="hint" id="hint-companyName"></div>
+                    </div>
+                    <div>
+                        <label class="label">IČO <span class="req-badge">povinné</span></label>
+                        <input type="text" id="ico" name="ico" maxlength="12">
+                        <div class="meta"><span class="count" data-for="ico">0 / 12</span></div>
+                        <div class="hint" id="hint-ico"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row" style="margin-top:10px;">
+                <div>
+                    <label class="label">Poznámky pre organizátora</label>
+                    <textarea id="notes" name="notes" maxlength="300" placeholder="Voliteľné poznámky..."></textarea>
+                    <div class="meta"><span class="count" data-for="notes">0 / 300</span></div>
+                </div>
+                <div>
+                    <label class="label">Moje meno (skryté pole)</label>
+                    <button type="button" class="btn secondary" id="revealAuthor">Zobraziť moje meno</button>
+                    <input type="hidden" name="author" id="authorHidden" value="Roman Zhmurovskyi">
+                    <input type="text" id="authorShown" readonly style="margin-top: 8px; display: block;">
+                </div>
+            </div>
+
+            <!-- Rekapitulácia v stránke -->
+            <div id="summary">
+                <strong>Rekapitulácia:</strong>
+                <div>Hra: -- Vyberte hru --</div>
+                <div>Miestnosť: —</div>
+                <div>Počet osôb: —</div>
+                <div>Dátum a čas: —</div>
+                <div>Vybavenie: —</div>
+                <div>Dĺžka slotu: —</div>
+                <div>Cena celkom: —</div>
+            </div>
+
+            <div id="form-error" class="form-error"></div>
+
+            <div class="actions">
+                <button type="submit">Odoslať</button>
+                <button type="reset" class="btn secondary">Reset</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- PRAVO: Obrázok -->
+    <div class="art" aria-hidden="true">
+        <img src="img/ab3.jpg" alt="">
+        <div class="overlay"></div>
+    </div>
+</div>
+
+<!-- ===== Modal preview markup ===== -->
+<div class="modal-backdrop" id="previewModal" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="pvTitle">
+        <h3 id="pvTitle">Kontrola objednávky</h3>
+        <div id="pvBody" class="modal-body"></div>
+        <div class="modal-actions">
+            <button type="button" id="pvSend">Odoslať</button>
+            <button type="button" class="btn secondary" id="pvCancel">Zavrieť</button>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    /* ===== Pomocné selektory ===== */
+    /* pick elements */
+    const $  = s => document.querySelector(s);              // get one
+    const $$ = s => Array.from(document.querySelectorAll(s)); // get many
+
+    /* ===== Поле -> підказка/клас ===== */
+    /* paint field red or normal + show small message */
+    function setFieldValidity(id, ok, msg)
+    {
+        const el   = document.getElementById(id);             // the input
+        const hint = document.getElementById("hint-"+id);     // text under input
+        const box  = el?.closest("div");                      // wrapper div
+        if (box)  box.classList.toggle("error", !ok);         // red style when not ok
+        if (hint) hint.textContent = msg || "";               // show message text
+    }
+
+    /* check: field is not empty */
+    function requiredNonEmpty(id, msg)
+    {
+        const hasText = document.getElementById(id).value.trim() !== "";
+        setFieldValidity(id, hasText, hasText ? "" : msg);
+        return hasText;
+    }
+
+    /* count text like "12 / 40" */
+    function updateCount(id)
+    {
+        const el = document.getElementById(id);        // get field
+        if (!el) return;                                // stop if missing
+        const max = el.getAttribute("maxlength");       // max length
+        const counter = document.querySelector(`.count[data-for="${id}"]`); // counter box
+        if (counter && max) counter.textContent = `${el.value.length} / ${max}`; // set text
+    }
+
+    /* start counters + update while typing */
+    ["first","last","email","notes","tel","customGame","companyName","ico"].forEach(id=>{
+        const el = document.getElementById(id);         // field
+        if (el){
+            updateCount(id);                              // set first value
+            el.addEventListener("input", ()=>updateCount(id)); // update on input
+        }
+    });
+
+    /* ===== Телефон ===== */
+    /* phone check
+     needs: number box = 7–12 digits, whole phone (code+number) ≤ 15 digits */
+    function validateTel()
+    {
+        const number = $("#tel").value.trim();          // number part
+        const code   = $("#telCode").value;             // +421, etc.
+        const onlyDigitsLenOK = /^\d{7,12}$/.test(number);     // 7–12 digits
+        const totalDigits = (code + number).replace(/\D/g,"").length; // all digits count
+        const ok = onlyDigitsLenOK && totalDigits <= 15;        // both rules true
+        setFieldValidity("tel", ok, ok ? "" : "Zadajte 7–12 číslic (iba čísla)."); // show msg
+        return ok;                                      // true/false
+    }
+    $("#tel").addEventListener("input", validateTel); // check while typing
+    $("#tel").addEventListener("blur",  validateTel); // check on exit
+
+    /* ===== DOB ↔ age ===== */
+    /* date of birth → fill age automatically */
+    const dob  = $("#dob");                 // date field
+    const age  = $("#age");                 // age field
+    const eAge = $("#e");                   // small text under age
+    const hDOB = $("#hint-dob");            // small text under dob
+    /* make age number from "YYYY-MM-DD" */
+    const calcAge = iso => {
+        if (!iso) return "";                            // no date → empty
+        const today = new Date();                       // today
+        const [y,m,d] = iso.split("-").map(Number);     // parts
+        let a = today.getFullYear() - y;                // base age
+        // if birthday not yet happened this year → minus 1
+        if (today.getMonth() < m-1 || (today.getMonth() === m-1 && today.getDate() < d)) a--;
+        return a >= 0 ? String(a) : "";                 // return as text
+    };
+
+    /* when user picks date: fill age, clear texts */
+    dob.addEventListener("input", ()=>{
+        age.value = calcAge(dob.value);                 // put age
+        age.setCustomValidity("");                      // clear native error
+        eAge.textContent = "";                          // clear small text
+    });
+
+    /* check: age field equals the age from date */
+    function validateAgeDOB(){
+        const shouldBe = calcAge(dob.value);            // expected age
+        const ok = age.value === shouldBe && shouldBe !== ""; // same and not empty
+        age.setCustomValidity(ok ? "" : "Vek nezodpovedá dátumu narodenia."); // set native msg
+        eAge.textContent = ok ? "" : "Vek nezodpovedá dátumu narodenia.";     // small text
+        hDOB.textContent = dob.value ? "" : "Zadajte dátum narodenia.";       // need a date
+        return ok;                                      // true/false
+    }
+    dob.addEventListener("blur", validateAgeDOB);     // check on exit
+
+    /* email check
+       needs: at least 3 letters/numbers before @, then @, then dot, last 2–4 letters */
+    function validateEmailStrict(){
+        const email = $("#email").value.trim();         // get text
+        const rule  = /^[a-zA-Z0-9._%+-]{3,}@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/; // simple shape
+        const ok = rule.test(email);                    // fits the shape?
+        setFieldValidity("email", ok, ok ? "" : "Email nie je v správnom formáte."); // show msg
+        return ok;                                      // true/false
+    }
+    $("#email").addEventListener("blur", validateEmailStrict); // check on exit
+
+    /* ===== Dáta: hra -> miestnosti + ceny ===== */
+    const gameToRooms = {
+        cs2: ["DAST Gaming Room (Dust2)","Mirage Taktik Room","Inferno Training Hall","Nuke Control Center","Ancient Arena"],
+        valorant: ["Ascent Hub","Bind Labs","Haven Dojo","Icebox Hangar","Lotus Garden"],
+        lol: ["Demacia Hall","Noxus War Room","Ionia Shrine","Piltover & Zaun Lab"],
+        rl: ["Octane Garage","Dominus Workshop","Fennec Studio","Takumi Track"],
+        hlvr: ["City-17 VR Room","Combine Lab VR","Quarantine Zone VR"],
+        ps: ["DualSense Lounge","Retro PS Room","Couch Co-op Zone"],
+        other: ["Individuálna miestnosť"]
+    };
+    const roomHours = {
+        "DAST Gaming Room (Dust2)":2,"Mirage Taktik Room":3,"Inferno Training Hall":2,"Nuke Control Center":3,"Ancient Arena":4,
+        "Ascent Hub":3,"Bind Labs":2,"Haven Dojo":3,"Icebox Hangar":2,"Lotus Garden":4,
+        "Demacia Hall":3,"Noxus War Room":3,"Ionia Shrine":2,"Piltover & Zaun Lab":4,
+        "Octane Garage":2,"Dominus Workshop":2,"Fennec Studio":3,"Takumi Track":3,
+        "City-17 VR Room":2,"Combine Lab VR":2,"Quarantine Zone VR":2,
+        "DualSense Lounge":2,"Retro PS Room":2,"Couch Co-op Zone":3,
+        "Individuálna miestnosť":2
+    };
+    const gameConfig = {
+        cs2:{ unitLabel:"Počet osôb", unitRate:8, unitOptions:[1,2,3,4,5,6] },
+        valorant:{ unitLabel:"Počet osôb", unitRate:8, unitOptions:[1,2,3,4,5,6] },
+        lol:{ unitLabel:"Počet osôb", unitRate:7, unitOptions:[1,2,3,4,5,6] },
+        rl:{ unitLabel:"Počet osôb", unitRate:6, unitOptions:[1,2,3,4,5,6] },
+        hlvr:{ unitLabel:"Počet osôb", unitRate:15, unitOptions:[1,2,3,4] },
+        ps:{ unitLabel:"Počet osôb", unitRate:4, unitOptions:[1,2,3,4] },
+        other:{ unitLabel:"Počet osôb", unitRate:6, unitOptions:[1,2,3,4,5,6] }
+    };
+
+    /* ===== UI prepojenie + cena + rekap ===== */
+    const selGame=$("#game"), selRoom=$("#room"), selUnits=$("#units"), unitsLabel=$("#unitsLabel");
+    const priceBox=$("#price"), summaryBox=$("#summary");
+
+    function fillSelect(el, arr, placeholder)
+    {
+        el.innerHTML = `<option value="">${placeholder}</option>`;
+        (arr||[]).forEach(v=>{ const o=document.createElement("option"); o.value=v; o.textContent=v; el.appendChild(o); });
+        el.disabled = !(arr && arr.length);
+    }
+
+    function formatEUR(n){ return n.toFixed(2).replace(".", ",") + " €"; }
+
+    function updateUnitsLabelFor(gameKey)
+    {
+        const cfg = gameConfig[gameKey];
+        if(cfg && unitsLabel){ unitsLabel.innerHTML = `3. ${cfg.unitLabel} <span class="req-badge">povinné</span>`; }
+    }
+
+    function totalPrice()
+    {
+        const g = selGame.value;
+        const r = selRoom.value;
+        const u = parseInt(selUnits.value||"0",10);
+        if(!g || !r || !u) return null;
+        const cfg = gameConfig[g];
+        const hours = roomHours[r] || 2;
+        return { sum: cfg.unitRate * u * hours, hours };
+    }
+
+    function calcAndShowPrice()
+    {
+        const res = totalPrice();
+        priceBox.textContent = res ? ("Cena celkom: " + formatEUR(res.sum)) : "Cena celkom: —";
+        updateSummary();
+    }
+
+    function updateUnitsOptionsWithPrices()
+    {
+        const g = selGame.value;
+        const r = selRoom.value;
+        const cfg = gameConfig[g];
+        if(!cfg || !r){ fillSelect(selUnits, null, "-- Najprv vyberte miestnosť --"); return; }
+        const hours = roomHours[r] || 2;
+        selUnits.innerHTML = `<option value="">-- Vyberte počet --</option>`;
+        cfg.unitOptions.forEach(n=>{
+            const price = cfg.unitRate * n * hours;
+            const o = document.createElement("option");
+            o.value = String(n);
+            o.textContent = `${n} — (${hours} h - ${formatEUR(price)})`;
+            selUnits.appendChild(o);
+        });
+        selUnits.disabled = false;
+    }
+
+    function chosenGameText()
+    {
+        if(selGame.value === "other"){
+            const t = $("#customGame").value.trim();
+            return t || "(iná hra)";
+        }
+        return selGame.options[selGame.selectedIndex]?.text || "—";
+    }
+    function updateSummary()
+    {
+        const gameName = chosenGameText();
+        const roomName = selRoom.value || "—";
+        const people = selUnits.value || "—";
+        const res = totalPrice();
+        const hours = res ? `${res.hours} h` : "—";
+        const sum = res ? formatEUR(res.sum) : "—";
+        const rentDateTime = $("#rentDateTime").value || "—";
+        const gearSelected = $$('input[name="gear"]:checked').map(c=>c.value).join(", ") || "—";
+        summaryBox.innerHTML = `
+      <strong>Rekapitulácia:</strong>
+      <div>Hra: ${gameName}</div>
+      <div>Miestnosť: ${roomName}</div>
+      <div>Počet osôb: ${people}</div>
+      <div>Dátum a čas: ${rentDateTime}</div>
+      <div>Vybavenie: ${gearSelected}</div>
+      <div>Dĺžka slotu: ${hours}</div>
+      <div>Cena celkom: ${sum}</div>`;
+    }
+
+    // Hra change + „iná hra“
+    function toggleCustomGame(){
+        const isOther = selGame.value === "other";
+        $("#customGameWrap").style.display = isOther ? "block" : "none";
+        if(isOther){
+            $("#customGame").setAttribute("required","required");
+            fillSelect(selRoom, gameToRooms.other, "-- Vyberte miestnosť --");
+        }else{
+            $("#customGame").removeAttribute("required");
+            $("#customGame").value = "";
+            fillSelect(selRoom, gameToRooms[selGame.value], "-- Vyberte miestnosť --");
+        }
+        fillSelect(selUnits, null, "-- Najprv vyberte miestnosť --");
+        updateUnitsLabelFor(selGame.value || "cs2");
+        calcAndShowPrice();
+        updateCount("customGame");
+    }
+    selGame.addEventListener("change", toggleCustomGame);
+    $("#customGame").addEventListener("blur", ()=>{
+        if(selGame.value==="other"){
+            const ok = !!$("#customGame").value.trim();
+            setFieldValidity("customGame", ok, ok ? "" : "Zadajte názov hry.");
+        }
+    });
+
+    selRoom.addEventListener("change", ()=>{ updateUnitsOptionsWithPrices(); calcAndShowPrice(); });
+    selUnits.addEventListener("change", calcAndShowPrice);
+
+    /* ===== Live onblur/onchange validácia pre zvyšné polia ===== */
+    $("#first").addEventListener("blur", ()=>requiredNonEmpty("first","Zadajte meno."));
+    $("#last").addEventListener("blur",  ()=>requiredNonEmpty("last","Zadajte priezvisko."));
+    $("#game").addEventListener("blur",  ()=>{ const ok=!!$("#game").value; setFieldValidity("game", ok, ok?"":"Vyberte hru."); });
+    $("#room").addEventListener("blur",  ()=>{ const ok=!!$("#room").value; setFieldValidity("room", ok, ok?"":"Vyberte miestnosť."); });
+    $("#units").addEventListener("blur", ()=>{ const ok=!!$("#units").value; setFieldValidity("units", ok, ok?"":"Vyberte počet."); });
+    $("#rentDateTime").addEventListener("blur", ()=>requiredNonEmpty("rentDateTime","Zadajte dátum a čas prenájmu."));
+
+    /* ===== Submit: validácia + MODAL preview ===== */
+    function requireSelect(id, msg){
+        const ok = !!document.getElementById(id).value;
+        setFieldValidity(id, ok, ok ? "" : msg);
+        return ok;
+    }
+    function validateAll(){
+        let ok = true;
+        ok &= requiredNonEmpty("first","Zadajte meno.");
+        ok &= requiredNonEmpty("last","Zadajte priezvisko.");
+        const genderOK = $$('input[name="gender"]:checked').length>0;
+        if(!genderOK) $("#hint-gender").textContent = "Vyberte pohlavie.";
+        ok &= genderOK;
+        ok &= requiredNonEmpty("dob","Zadajte dátum narodenia.");
+        ok &= validateAgeDOB();
+        ok &= validateTel();
+        ok &= requireSelect("game","Vyberte hru.");
+        if($("#game").value==="other"){
+            const cgOK = !!$("#customGame").value.trim();
+            setFieldValidity("customGame", cgOK, cgOK?"":"Zadajte názov hry.");
+            ok &= cgOK;
+        }
+        ok &= requireSelect("room","Vyberte miestnosť.");
+        ok &= requireSelect("units","Vyberte počet.");
+        ok &= requiredNonEmpty("rentDateTime","Zadajte dátum a čas prenájmu.");
+
+        const emailOk = $("#email").checkValidity() && validateEmailStrict();
+        ok &= emailOk;
+
+        const isInvoice = document.querySelector('input[name="payment"]:checked')?.value === "invoice";
+        if (isInvoice){
+            const companyOk = requiredNonEmpty("companyName","Zadajte názov firmy.");
+            const icoOk = requiredNonEmpty("ico","Zadajte IČO.");
+            ok &= companyOk && icoOk;
+        }
+        $("#form-error").textContent = ok ? "" : "Nie je možné odoslať — opravte zvýraznené chyby.";
+        return !!ok;
+    }
+
+    // Modal helpers
+    const modal = $("#previewModal"), pvBody=$("#pvBody"), pvSend=$("#pvSend"), pvCancel=$("#pvCancel");
+    function openModal(html){ pvBody.innerHTML = html; modal.style.display="flex"; modal.setAttribute("aria-hidden","false"); }
+    function closeModal(){ modal.style.display="none"; modal.setAttribute("aria-hidden","true"); }
+    pvCancel.addEventListener("click", closeModal);
+
+    let submitting = false;
+    $("#f").addEventListener("submit",(e)=>{
+        if(submitting) return; // protect double
+        e.preventDefault();
+        if(!validateAll()) return;
+
+        // rekap
+        const gameName = chosenGameText();
+        const roomName = selRoom.value || "—";
+        const people = selUnits.value || "—";
+        const res = totalPrice();
+        const hours = res ? `${res.hours} h` : "—";
+        const sum = res ? formatEUR(res.sum) : "—";
+        const rentDateTime = $("#rentDateTime").value || "—";
+        const gearSelected = $$('input[name="gear"]:checked').map(c=>c.value).join(", ") || "—";
+        const payLabel = ($$('input[name="payment"]:checked')[0]?.parentElement?.textContent || "—").trim();
+
+        // hidden pre form2mail
+        $("#fromEmail").value = $("#email").value.trim();
+        $("#senderName").value = `${$("#first").value.trim()} ${$("#last").value.trim()}`;
+        $("#subject").value    = `Objednávka e-šport – ${$("#first").value.trim()} ${$("#last").value.trim()}`;
+
+        const html = `
+      <div><strong>Hra:</strong> ${gameName}</div>
+      <div><strong>Miestnosť:</strong> ${roomName}</div>
+      <div><strong>Počet osôb:</strong> ${people}</div>
+      <div><strong>Dátum a čas:</strong> ${rentDateTime}</div>
+      <div><strong>Vybavenie:</strong> ${gearSelected}</div>
+      <div><strong>Dĺžka slotu:</strong> ${hours}</div>
+      <div><strong>Spôsob platby:</strong> ${payLabel}</div>
+      <div style="margin-top:8px;"><strong>${$("#price").textContent}</strong></div>
+    `;
+        openModal(html);
+
+        pvSend.onclick = ()=>{
+            submitting = true;
+            closeModal();
+            e.target.submit();
+        };
+    });
+
+    /* ===== Ostatné drobnosti ===== */
+    $("#revealAuthor").addEventListener("click", ()=>{
+        const val = $("#authorHidden").value;
+        const shown = $("#authorShown");
+        shown.value = val;
+        shown.style.display = "block";
+    });
+
+    $$('input[name="payment"]').forEach(input=>{
+        input.addEventListener("change",(ev)=>{
+            const showInvoice = ev.target.value === "invoice";
+            $("#invoiceDetails").style.display = showInvoice ? "block" : "none";
+        });
+    });
+
+    // Init
+    (function init(){
+        // štart rekap
+        updateSummary();
+    })();
+
+</script>
+</body>
+</html>

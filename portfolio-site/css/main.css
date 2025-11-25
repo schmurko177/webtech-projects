@@ -1,0 +1,502 @@
+/* INDEX.HTML */
+
+/* Fotka (index.html)
+
+    V margin:
+    1 hodnota → platí pre všetky 4 strany (margin: 10px;)
+    2 hodnoty → prvá = hore/dole, druhá = vľavo/vpravo (margin: 10px 20px;)
+    3 hodnoty → prvá = hore, druhá = vľavo/vpravo, tretia = dole (margin: 0 0 8px;)
+    4 hodnoty → postupne hore, vpravo, dole, vľavo (margin: 5px 10px 15px 20px;)
+*/
+
+/* to robi ten container pre foto aby nebol tam text */
+.float-left { float: left; margin: 0 16px 10px 0; }
+
+
+/* toto je to iste ale pre mobily aby bola obrazovka v centre, max-width: 700px to pre mobilov*/
+@media (max-width:700px)  {     .float-left { float: none; margin: 0 auto 12px auto; display: block;}  }
+/*
+    auto =  prehliadač automaticky rozdelí voľné miesto rovnomerne
+    Inline → prvky sa zoradia vedľa seba v jednom riadku (ako text).
+    Block → každý skočí na nový riadok a natiahne sa cez celú šírku rodiča.
+    Inline-block → sú vedľa seba ako inline, ale vieš im dať šírku/výšku ako pri block.
+*/
+
+
+
+/* Vertical list of predmety(index.html) */
+.subjects { margin: .5rem 0 0 1rem; padding: 0; }   /* padding = vnútorné odsadenie (vnútorný okraj) */
+.subjects li { margin: .15rem 0; }
+
+
+
+/* FONT A STYLE*/
+@font-face
+{
+    font-family: 'Poppins';
+    src: url('../assets/fonts/Poppins-Bold.woff2') format('woff2');
+    font-weight: 700;
+    font-style: normal;
+}
+
+@font-face
+{
+    font-family: 'Poppins';
+    src: url('../assets/fonts/Poppins-ExtraBold.woff2') format('woff2');
+    font-weight: 800;
+    font-style: normal;
+}
+
+
+body
+{
+    margin: 0;
+    font-family: 'Poppins', sans-serif;
+    line-height: 1.55;
+    color: #e9eefc;
+    background: radial-gradient(circle at top left, #0f2d68, #0b204a 50%, #001030 100%);
+    height: 100%;
+}
+
+
+/*  Premenne na vytvorenie gradientu */
+:root
+{
+    --bg:#0f2d68;
+    --bg-deep:#0b204a;
+    --text:#e9eefc;
+    --muted:#c7d2ff;
+    --accent:#ffb3c7;
+    --accent-2:#ff6fa0;
+    --radius:18px;
+    --shadow:0 10px 25px rgba(0,0,0,.25);
+    --header-h:86px;
+}
+
+* { box-sizing: border-box; } /* na sirku a vysku */
+
+/* Header + Menu */
+.my-header
+{
+    padding:22px 20px 10px;
+    max-width:1100px;
+    margin:0 auto;
+}
+
+.my-title
+{
+    margin:0 0 10px;
+    font-size:22px;
+    font-weight:700;    /* cim vacsie bude cislo tak hrubsie bude*/
+    letter-spacing:.2px;
+}
+
+
+
+/* MAIN MENU */
+.main_menu      /* kontajner na <ul> */
+{
+    display:flex; gap:10px; list-style:none;    /* gap definuje medzeru medzi prvkami vo flexboxe */
+    padding:0; margin:0; flex-wrap:wrap;
+}
+
+.main_menu a    /* to je na ten polu-invisible box za tabulou*/
+{
+    display:inline-block;
+    padding:10px 14px;
+    border-radius:999px;
+    text-decoration:none;
+    color:var(--text);
+    border:1px solid rgba(255,255,255,.18);
+    background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.02));
+    backdrop-filter:saturate(150%) blur(4px);
+    transition:.2s ease;
+}
+
+.main_menu a[aria-current="page"]   /*tlacidlo aktualnej stranky */
+{
+    border-color: var(--accent);
+    background: linear-gradient(180deg, var(--accent-2), var(--accent));
+    color: #fff;
+    box-shadow: 0 0 10px rgba(255, 111, 160, 0.6);
+    font-weight: 600;
+}
+
+.main_menu a:hover  /* efekt pri prechode myšou */
+{
+    transform: translateY(-1px);
+    box-shadow: var(--shadow);
+}
+
+@media (max-width:600px)
+{
+    .main_menu { gap: 4px; }
+    .main_menu a { font-size:13px; padding:6px 10px; }
+    .my-title { font-size:18px; }
+}
+
+@media (max-width:400px)
+{
+    .main_menu a { font-size:11px; padding:4px 8px; }
+}
+
+
+
+
+/* Hero sekcia */
+.hero
+{
+    position: relative;
+    min-height: 68vh;
+    margin: 2rem auto;
+    border-radius: .75rem;
+    overflow: hidden;
+    background: #000;
+}
+
+.hero::after
+{
+    content:""; position:absolute; inset:0;
+    background:url("../assets/img/hero.jpg") center/cover no-repeat;
+    z-index:0; filter:saturate(105%) contrast(103%);
+}
+
+.hero::before
+{
+    content:""; position:absolute; inset:0;
+    background:
+            linear-gradient(90deg, rgba(11,42,134,.88) 0%, rgba(11,42,134,.66) 45%, rgba(11,42,134,.35) 70%, rgba(11,42,134,.10) 100%),
+            linear-gradient(180deg, rgba(0,0,0,.05), rgba(0,0,0,.35));
+    z-index:1;
+}
+
+.hero-content
+{
+    position: relative;
+    z-index: 2;
+    max-width: 800px;
+    padding: 2rem 1.25rem;
+}
+
+.profile-photo
+{
+    flex-shrink:0;
+    width:240px; height:240px;
+    object-fit:cover;
+    border-radius:12px;
+    border:3px solid rgba(255,255,255,0.25);
+}
+
+.hero-text { display:flex; flex-direction:column; gap:.75rem; }
+
+.hero h2 { margin:0 0 .25rem; font-weight:800; font-size:2rem; }
+
+.hero h2 a { color:inherit; text-decoration:none; transition:.3s; }
+
+.hero h2 a:hover { color:var(--accent); text-shadow:0 0 10px var(--accent-2),0 0 20px var(--accent); }
+
+.hero p { margin:0; color:var(--muted); }
+
+.hero .quote
+{
+    margin-top:.75rem; padding:.75rem 1rem;
+    border:1px dashed var(--muted);
+    background:rgba(255,255,255,.06);
+    color:#ffe3f2; font-weight:600; border-radius:.5rem;
+}
+
+@media (max-width:900px)
+{
+    .hero{min-height:60vh;margin:1rem auto;border-radius:.5rem;}
+    .hero-content{max-width:100%;padding:1.25rem}
+    .hero h2{font-size:1.6rem}
+}
+
+
+@media (max-width:700px)
+{
+    .hero-content
+    {
+        flex-direction: column;   /* z foto + text spraví stĺpec */
+        align-items: center;      /* vycentruje na stred */
+        text-align: center;       /* text pod fotkou na stred */
+    }
+
+    .profile-photo
+    {
+        margin-bottom: 1rem;
+        float: none;              /* vypne float */
+        margin-left: auto;
+        margin-right: auto;
+        display: block;           /* foto vycentrované */
+    }
+}
+
+
+
+@keyframes blinkCursor { 50%{ border-color:transparent; } }
+
+
+/*  //////////////////// ROZVRH ///////////////  */
+
+.rozvrh { width:100%; border-collapse:collapse; text-align:center; table-layout:fixed; }
+
+.rozvrh-wrap
+{
+    background: rgba(255,255,255,0.08);
+    padding:20px; border-radius:20px;
+    box-shadow:0 8px 25px rgba(0,0,0,0.4);
+    margin-top:20px;
+}
+
+.rozvrh th, .rozvrh td
+{
+    border:1px solid rgba(255,255,255,0.2);
+    padding:12px; min-width:100px;
+}
+
+.rozvrh th
+{
+    background:rgba(255,255,255,0.15);
+    font-weight:600;
+}
+
+.rozvrh td
+{
+    font-size:clamp(10px,1vw,14px);
+    word-wrap:break-word; line-height:1.2;
+}
+
+.rozvrh tbody tr:nth-of-type(even){background:rgba(255,255,255,.04);}
+
+.rozvrh tbody tr:nth-of-type(odd){background:rgba(0,0,0,.02);}
+
+.cvicenie {background:#5b8ef5;color:#fff;font-weight:600;border-radius:12px;}
+
+.prednaska{background:#44c767;color:#fff;font-weight:600;border-radius:12px;}
+
+.telesna  {background:#ff7f50;color:#fff;font-weight:600;border-radius:12px;}
+
+.legend {margin-top:15px;font-size:14px;opacity:0.85;}
+
+@media(max-width:480px)
+{
+    .rozvrh{font-size:8px;}
+    .rozvrh th,.rozvrh td{padding:2px;min-width:30px;}
+}
+
+
+/*  ////////////// ZIVOTOPIS ////////////  */
+
+.zivotopis { display:flex; flex-wrap:nowrap; gap:40px; }
+
+.zivotopis-left
+{
+    flex:1 1 250px; max-width:300px;
+    background:rgba(255,255,255,.06);
+    padding:20px; border-radius:12px;
+}
+
+.zivotopis-right
+{
+    flex:2 1 400px;
+    background:rgba(0,0,0,.18);
+    padding:20px; border-radius:12px;
+}
+
+.zivotopis-photo
+{
+    width:100%; aspect-ratio:1/1; object-fit:cover;
+    border-radius:12px; margin-bottom:15px;
+    border:3px solid rgba(255,255,255,0.25);
+}
+
+@media(max-width:1000px)
+{
+    .zivotopis{flex-wrap:wrap;}
+    .zivotopis-left,.zivotopis-right{flex:1 1 100%;max-width:100%;}
+    .zivotopis-photo{max-width:220px;margin:0 auto 15px;display:block;}
+}
+
+
+/*  ///////////////////// INTERAKTIVNY OBRAZ ///////////////  */
+
+.img-wrap {position:relative;max-width:800px;margin:0 auto;}            /* obal */
+
+.hero-img {width:100%;height:auto;display:block;border-radius:8px;}     /* obrazok */
+
+.marker     /* markery na obrazku */
+{
+    position:absolute; top:var(--y); left:var(--x);
+    width:18px;height:18px;border-radius:50%;
+    border:2px solid #fff; transform:translate(-50%,-50%);
+    cursor:pointer; transition:.2s;
+}
+
+.marker:hover, .marker:focus        /* efekty pri hover a focus */
+{
+    transform: translate(-50%, -50%) scale(1.3);
+    outline: none;
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.7);
+}
+.marker.v1{background:red;} .marker.v2{background:orange;} .marker.v3{background:yellow;}
+
+.marker.v4{background:green;} .marker.v5{background:blue;} .marker.v6{background:indigo;}
+
+.marker.v7{background:violet;}
+
+.bubble         /*bubble z textom */
+{
+    position:absolute; top:var(--y); left:var(--x);
+    transform:translate(calc(-50% + 14px), -50%);
+    padding:.45rem .6rem; border-radius:10px;
+    background:rgba(0,0,0,.75); color:#fff;
+    font-size:.9rem; line-height:1.25;
+    white-space:nowrap; opacity:0; pointer-events:none;
+    transition:opacity .15s ease, transform .15s ease;
+    border:1px solid rgba(255,255,255,.15);
+}
+
+.marker:hover + .bubble, .marker:focus + .bubble, .marker:focus-visible + .bubble
+{
+    opacity:1; transform:translate(calc(-50% + 14px), -55%);
+}
+
+@media(max-width:700px)
+{
+    .bubble{
+        left:50%; top:calc(100% + 12px);
+        transform:translate(-50%,0);
+        white-space:normal; max-width:86vw; text-align:center;
+    }
+}
+
+/* Nadpisy článkov podľa farby */
+#p1 h3{background:red;color:#fff;}
+#p2 h3{background:orange;color:#fff;}
+#p3 h3{background:yellow;color:#000;}
+#p4 h3{background:green;color:#fff;}
+#p5 h3{background:blue;color:#fff;}
+#p6 h3{background:indigo;color:#fff;}
+#p7 h3{background:violet;color:#fff;}
+#p1 h3,#p2 h3,#p3 h3,#p4 h3,#p5 h3,#p6 h3,#p7 h3{
+    padding:4px 8px;border-radius:6px;display:inline-block;
+}
+
+/*  Farebné menovky pod fotkou  */
+.tag
+{
+    display: inline-block;
+    padding: 3px 8px;
+    margin-right: 6px;
+    border-radius: 6px;
+    font-weight: 600;
+    line-height: 1.3;
+}
+
+/* farby podľa markerov */
+.tag.v1 { background: red; color: white; }
+.tag.v2 { background: orange; color: white; }
+.tag.v3 { background: yellow; color: black; }
+.tag.v4 { background: green; color: white; }
+.tag.v5 { background: blue; color: white; }
+.tag.v6 { background: indigo; color: white; }
+.tag.v7 { background: violet; color: white; }
+
+
+
+/* ////////// TLACIDLA PRE HORIZONTALNE MENU ////////// */
+
+a {color: #66c2ff;text-decoration: none;}
+
+a:visited {color: #66c2ff;}
+
+a:hover { color: var(--accent);  text-decoration: underline;} /*pri prejdeni mysou */
+
+a:active {color: #ffffff;}
+
+h2 {text-align: center;    margin-bottom: 1rem;}
+
+
+
+/* ///////////////////////// KAMARÁTI //////////////////// */
+/* https://developer.mozilla.org/en-US/docs/Learn_web_development/Core/Styling_basics/Box_model
+   tuto som vystudoval ako robit tie boxy     */
+
+.body                   /* kontajner */
+{
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 30px 20px; /* viac medzier */
+}
+
+.body h2                /* nadpisy */
+{
+    text-align: center;
+    margin-bottom: 2rem;
+    font-size: 1.8rem;
+    font-weight: 700;
+}
+
+.body article           /* cards */
+{
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 12px;
+    padding: 15px 20px;
+    margin: 20px 0;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.35);
+    transition: transform .3s ease, box-shadow .3s ease, opacity .6s ease;
+    opacity: 0;                /* animation */
+    transform: translateY(20px);
+    animation: fadeUp 0.8s ease forwards;
+}
+
+/* card appearance  */
+/* https://developer.mozilla.org/en-US/docs/Web/CSS/:nth-child - tuto pozeral som implementaciu */
+.body article:nth-child(2) { animation-delay: .1s; }
+.body article:nth-child(3) { animation-delay: .2s; }
+.body article:nth-child(4) { animation-delay: .3s; }
+.body article:nth-child(5) { animation-delay: .4s; }
+.body article:nth-child(6) { animation-delay: .5s; }
+.body article:nth-child(7) { animation-delay: .6s; }
+.body article:nth-child(8) { animation-delay: .7s; }
+
+@keyframes fadeUp       /* animacia, kde karta sa postupne objaví a zdvihne nahor */
+{
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.body article:hover     /* efekt = rozmer tene a color */
+{
+    transform: translateY(-4px);             /* mení polohu, veľkosť alebo natočenie prvku */
+    box-shadow: 0 10px 22px rgba(0,0,0,0.5); /* posunie prvok o –4px po osi Y (teda smerom hore) */
+}
+
+.body article h3        /* stýl pre nadpisy */
+{
+    margin: 0 0 8px;
+    font-size: 1.1rem;
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 6px;
+}
+
+.body article p         /* stýl pre odstavce v kartách */
+{
+    margin: 0;       /* vonkajšie odsadenie od susedov */
+    color: var(--text);
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+/*
+
+[ margin ]
+┌───────────────┐
+│   [ padding ] │
+│     Ahoj      │
+│   [ padding ] │
+└───────────────┘
+[ margin ]
+
+*/
