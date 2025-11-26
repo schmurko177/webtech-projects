@@ -152,13 +152,19 @@
 
         <!-- NEW: Tasks Container for task names -->
         <section class="tasks-container">
-            <div class="tasks-header"> <!-- заголовок для вирівнювання з timeline -->
+            <div class="tasks-header">
                 <div class="task-header-placeholder">{{ t('tasks') }}</div>
             </div>
             <div class="tasks-list">
                 <div v-for="task in filteredTasks" :key="task.id"
                      class="task-row"
-                     :class="{ 'task-row--highlight': isTaskHighlighted(task) }">
+                     :class="{ 'task-row--highlight': isTaskHighlighted(task) }"
+                     draggable="true"
+                     @dragstart="onTaskDragStart(task.id)"
+                     @dragover.prevent="onTaskDragOver(task.id)"
+                     @drop="onTaskDrop(task.id)"
+                     @dragenter="onTaskDragEnter($event)"
+                     @dragleave="onTaskDragLeave($event)">
 
                     <div class="task-info">
                         <div class="task-name" contenteditable="true"
@@ -166,28 +172,27 @@
                              @keydown.enter="$event.target.blur()">
                             {{ task.name }}
                         </div>
-                        <!-- Змініть в index.html ці блоки -->
                         <div class="task-dates">
+                    <span class="date-editable"
+                          contenteditable="true"
+                          @blur="updateTaskDate(task, 'start', $event)"
+                          @keydown.enter="$event.target.blur()"
+                          @keydown.escape="cancelDateEdit($event)">
+                        {{ formatDate(task.start) }}
+                    </span>
+                            -
                             <span class="date-editable"
                                   contenteditable="true"
-                                  @blur="updateTaskDate(task, 'start', $event)"
+                                  @blur="updateTaskDate(task, 'end', $event)"
                                   @keydown.enter="$event.target.blur()"
                                   @keydown.escape="cancelDateEdit($event)">
-                                {{ formatDate(task.start) }}
-                            </span>
-                                                    -
-                                                    <span class="date-editable"
-                                                          contenteditable="true"
-                                                          @blur="updateTaskDate(task, 'end', $event)"
-                                                          @keydown.enter="$event.target.blur()"
-                                                          @keydown.escape="cancelDateEdit($event)">
-                                {{ formatDate(task.end) }}
-                            </span>
+                        {{ formatDate(task.end) }}
+                    </span>
                         </div>
                         <div class="task-tags">
-                        <span v-for="tag in task.tags" :key="tag" class="task-tag">
-                            {{ tag }}
-                        </span>
+                    <span v-for="tag in task.tags" :key="tag" class="task-tag">
+                        {{ tag }}
+                    </span>
                         </div>
                     </div>
 

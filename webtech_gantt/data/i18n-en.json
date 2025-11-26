@@ -49,5 +49,6 @@
   "current_month": "This month",
   "current_quarter": "This quarter",
   "save_to_file": "Save to file",
-  "tasks": "Tasks"
+  "tasks": "Tasks",
+  "drag_to_reorder": "Drag to reorder tasks"
 }

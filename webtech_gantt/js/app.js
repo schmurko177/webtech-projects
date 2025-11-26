@@ -41,7 +41,8 @@ createApp({
             // Drag & Drop
             dragState: {
                 draggedId: null,
-                dragOverId: null
+                dragOverId: null,
+                source: null
             },
 
             // Localization
@@ -229,6 +230,79 @@ createApp({
             document.documentElement.setAttribute('data-theme', this.ui.theme);
         },
 
+        onTaskDragStart(taskId) {
+            this.dragState.draggedId = taskId;
+            this.dragState.source = 'task';
+            event.dataTransfer.effectAllowed = 'move';
+        },
+
+        onTaskDragOver(taskId) {
+            if (this.dragState.draggedId && taskId !== this.dragState.draggedId && this.dragState.source === 'task') {
+                event.dataTransfer.dropEffect = 'move';
+            }
+        },
+
+        onTaskDrop(taskId) {
+            if (!this.dragState.draggedId || this.dragState.draggedId === taskId || this.dragState.source !== 'task') return;
+
+            const fromIndex = this.tasks.findIndex(t => t.id === this.dragState.draggedId);
+            const toIndex = this.tasks.findIndex(t => t.id === taskId);
+
+            if (fromIndex !== -1 && toIndex !== -1) {
+                const [movedTask] = this.tasks.splice(fromIndex, 1);
+                this.tasks.splice(toIndex, 0, movedTask);
+                this.saveTasks();
+            }
+
+            this.dragState.draggedId = null;
+            this.dragState.source = null;
+
+            // Видаляємо drag-over класи
+            document.querySelectorAll('.task-row.drag-over').forEach(row => {
+                row.classList.remove('drag-over');
+            });
+        },
+
+        onTaskDragEnter(event) {
+            if (this.dragState.draggedId && this.dragState.source === 'task') {
+                event.currentTarget.classList.add('drag-over');
+            }
+        },
+
+        onTaskDragLeave(event) {
+            if (!event.currentTarget.contains(event.relatedTarget)) {
+                event.currentTarget.classList.remove('drag-over');
+            }
+        },
+
+        onDragStart(taskId) {
+            this.dragState.draggedId = taskId;
+            this.dragState.source = 'bar';
+        },
+
+        onDragOver(taskId) {
+            if (taskId !== this.dragState.draggedId && this.dragState.source === 'bar') {
+                this.dragState.dragOverId = taskId;
+            }
+        },
+
+        onDrop(taskId) {
+            if (!this.dragState.draggedId || this.dragState.draggedId === taskId || this.dragState.source !== 'bar') return;
+
+            const fromIndex = this.tasks.findIndex(t => t.id === this.dragState.draggedId);
+            const toIndex = this.tasks.findIndex(t => t.id === taskId);
+
+            if (fromIndex !== -1 && toIndex !== -1) {
+                const [movedTask] = this.tasks.splice(fromIndex, 1);
+                this.tasks.splice(toIndex, 0, movedTask);
+                this.saveTasks();
+            }
+
+            this.dragState.draggedId = null;
+            this.dragState.dragOverId = null;
+            this.dragState.source = null;
+        },
+
         saveTasksToFile() {
             const data = {
                 tasks: this.tasks,
@@ -339,32 +413,7 @@ createApp({
             this.saveTasks();
         },
 
-        // Drag & Drop
-        onDragStart(taskId) {
-            this.dragState.draggedId = taskId;
-        },
 
-        onDragOver(taskId) {
-            if (taskId !== this.dragState.draggedId) {
-                this.dragState.dragOverId = taskId;
-            }
-        },
-
-        onDrop(taskId) {
-            if (!this.dragState.draggedId || this.dragState.draggedId === taskId) return;
-
-            const fromIndex = this.tasks.findIndex(t => t.id === this.dragState.draggedId);
-            const toIndex = this.tasks.findIndex(t => t.id === taskId);
-
-            if (fromIndex !== -1 && toIndex !== -1) {
-                const [movedTask] = this.tasks.splice(fromIndex, 1);
-                this.tasks.splice(toIndex, 0, movedTask);
-                this.saveTasks();
-            }
-
-            this.dragState.draggedId = null;
-            this.dragState.dragOverId = null;
-        },
 
         // Gantt Chart
         getCellWidth() {

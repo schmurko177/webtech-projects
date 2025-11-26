@@ -719,6 +719,51 @@ body {
     margin: 0;
 }
 
+
+
+.task-row {
+    transition: all 0.2s ease;
+    cursor: grab;
+}
+
+.task-row:active {
+    cursor: grabbing;
+}
+
+.task-row.drag-over {
+    background-color: var(--accent-soft);
+    border: 2px dashed var(--primary-color);
+    transform: scale(1.02);
+}
+
+.task-row.dragging {
+    opacity: 0.5;
+    background-color: var(--bg-tertiary);
+}
+
+/* Drag handle indicator */
+.task-row::before {
+    content: '⋮⋮';
+    color: var(--text-muted);
+    margin-right: 0.5rem;
+    font-size: 0.8rem;
+    cursor: grab;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.task-row:hover::before {
+    opacity: 1;
+}
+
+.task-row:active::before {
+    opacity: 1;
+    color: var(--primary-color);
+}
+
+
+
+
 .task-row--highlight {
     background: rgba(255, 255, 0, 0.1);
 }
