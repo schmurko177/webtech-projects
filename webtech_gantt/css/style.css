@@ -110,6 +110,13 @@ body {
     flex: 1;
     display: flex;
     overflow: hidden;
+    align-items: stretch;
+}
+
+.tasks-header,
+.timeline-header {
+    height: 3rem;
+    flex-shrink: 0; /* Забороняємо стискання */
 }
 
 /* Sidebar */
@@ -404,38 +411,28 @@ body {
     height: 100%;
 }
 
-.gantt-row {
-    display: flex;
-    align-items: center;
-    min-height: 3rem;
-    border-bottom: 1px solid var(--border-color);
-    position: relative;
-    min-width: min-content;
-}
 
 .gantt-row--highlight {
     background: rgba(255, 255, 0, 0.1);
 }
 
 .task-info {
-    width: 250px;
-    padding: 0.5rem 1rem;
-    border-right: 1px solid var(--border-color);
-    background: var(--bg-primary);
-    position: sticky;
-    left: 0;
-    z-index: 5;
-    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* Вертикальне центрування контенту */
+    min-height: 3rem;
 }
 
 .task-name {
     font-weight: 600;
     margin-bottom: 0.25rem;
+    line-height: 1.2;
 }
 
 .task-dates {
     font-size: 0.75rem;
     color: var(--text-muted);
+    line-height: 1.2;
 }
 
 .task-timeline {
@@ -480,11 +477,13 @@ body {
 
 .task-bar {
     position: absolute;
-    height: 2rem;
+    height: 2rem; /* Трошки менше за висоту рядка */
     border-radius: 0.25rem;
     cursor: pointer;
     transition: all 0.2s;
     min-width: 20px;
+    top: 50%;
+    transform: translateY(-50%); /* Центруємо по вертикалі */
 }
 
 .task-bar:hover {
@@ -505,7 +504,7 @@ body {
     right: 0;
     bottom: 0;
     display: flex;
-    align-items: center;
+    align-items: center; /* Вертикальне центрування */
     justify-content: space-between;
     padding: 0 0.5rem;
     font-size: 0.75rem;
@@ -618,6 +617,7 @@ body {
     flex-wrap: wrap;
     gap: 0.25rem;
     margin-top: 0.25rem;
+    line-height: 1;
 }
 
 .task-tag {
@@ -668,6 +668,22 @@ body {
     flex-direction: column;
 }
 
+.tasks-container .tasks-list,
+.gantt-container .gantt-body {
+    height: calc(100% - 3rem); /* Враховуємо header */
+}
+
+.task-row,
+.gantt-row {
+    align-items: stretch; /* Займають всю доступну висоту */
+}
+
+.tasks-list,
+.gantt-body {
+    overflow-y: auto;
+    scrollbar-width: thin;
+}
+
 .tasks-header {
     height: 3rem;
     background: var(--bg-secondary);
@@ -690,6 +706,7 @@ body {
     min-height: 3rem;
     border-bottom: 1px solid var(--border-color);
     padding: 0.5rem 1rem;
+    margin: 0;
 }
 
 .task-row--highlight {
@@ -706,17 +723,29 @@ body {
     border-radius: 0; /* Змінили з 0.5rem */
     box-shadow: none; /* Змінили з var(--shadow) */
     overflow: hidden;
-    border-left: 1px solid var(--border-color); /* Додали для відокремлення */
+    border-left: none; /* Додали для відокремлення */
 }
+
+.task-row:hover,
+.gantt-row:hover {
+    background: var(--bg-tertiary);
+}
+
+.task-row--highlight,
+.gantt-row--highlight {
+    background: rgba(255, 255, 0, 0.1);
+}
+
 
 /* Прибрати task-info з гантт-ряду */
 .gantt-row {
     display: flex;
     align-items: center;
-    min-height: 3rem;
+    min-height: 3rem; /* Така ж висота як у task-row */
     border-bottom: 1px solid var(--border-color);
     position: relative;
     min-width: min-content;
+    margin: 0; /* Прибираємо марджини */
 }
 
 /* Видалити старий task-info */

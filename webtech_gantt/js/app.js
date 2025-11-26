@@ -544,6 +544,26 @@ createApp({
             });
         },
 
+        syncRowHeights() {
+            this.$nextTick(() => {
+                const taskRows = document.querySelectorAll('.task-row');
+                const ganttRows = document.querySelectorAll('.gantt-row');
+
+                const maxLength = Math.max(taskRows.length, ganttRows.length);
+
+                for (let i = 0; i < maxLength; i++) {
+                    if (taskRows[i] && ganttRows[i]) {
+                        const taskHeight = taskRows[i].offsetHeight;
+                        const ganttHeight = ganttRows[i].offsetHeight;
+                        const maxHeight = Math.max(taskHeight, ganttHeight) + 'px';
+
+                        taskRows[i].style.minHeight = maxHeight;
+                        ganttRows[i].style.minHeight = maxHeight;
+                    }
+                }
+            });
+        },
+
         scrollToToday() {
             this.scrollToDate(new Date().toISOString().split('T')[0]);
         },
@@ -573,13 +593,24 @@ createApp({
             this.$nextTick(() => {
                 this.initScrollSync();
             });
+        },
+
+        filteredTasks: {
+            handler() {
+                this.$nextTick(() => {
+                    this.syncRowHeights();
+                });
+            },
+            deep: true
         }
     },
+
 
     async mounted() {
         await this.loadTranslations();
         this.loadAll();
         this.applyTheme();
+        this.syncRowHeights();
 
         // Set default dates if not set
         if (!this.settings.startDate) {
