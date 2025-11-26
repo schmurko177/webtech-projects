@@ -510,6 +510,12 @@ createApp({
             if (target && source.scrollLeft !== target.scrollLeft) {
                 target.scrollLeft = source.scrollLeft;
             }
+
+            // Додатково синхронізуємо скрол завдань, якщо потрібно
+            const tasksList = document.querySelector('.tasks-list');
+            if (tasksList && source === this.$refs.ganttBody) {
+                tasksList.scrollTop = source.scrollTop;
+            }
         },
 
         scrollToDate(dateString) {

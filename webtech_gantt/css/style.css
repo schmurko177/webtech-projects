@@ -282,17 +282,7 @@ body {
     color: white;
 }
 
-/* Gantt Chart */
-.gantt-container {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    background: var(--bg-primary);
-    margin: 1rem;
-    border-radius: 0.5rem;
-    box-shadow: var(--shadow);
-    overflow: hidden;
-}
+
 
 .timeline-header {
     display: grid;
@@ -626,4 +616,67 @@ body {
     box-shadow: 0 2px 8px rgba(220, 38, 38, 0.5);
 }
 
+/* Новий контейнер для завдань */
+.tasks-container {
+    width: 300px;
+    background: var(--bg-primary);
+    border-right: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+}
 
+.tasks-header {
+    height: 3rem;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    padding: 0 1rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.tasks-list {
+    flex: 1;
+    overflow-y: auto;
+}
+
+.task-row {
+    display: flex;
+    align-items: center;
+    min-height: 3rem;
+    border-bottom: 1px solid var(--border-color);
+    padding: 0.5rem 1rem;
+}
+
+.task-row--highlight {
+    background: rgba(255, 255, 0, 0.1);
+}
+
+/* Оновлений гантт-контейнер */
+.gantt-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-primary);
+    margin: 0; /* Змінили з 1rem 1rem 1rem 0 */
+    border-radius: 0; /* Змінили з 0.5rem */
+    box-shadow: none; /* Змінили з var(--shadow) */
+    overflow: hidden;
+    border-left: 1px solid var(--border-color); /* Додали для відокремлення */
+}
+
+/* Прибрати task-info з гантт-ряду */
+.gantt-row {
+    display: flex;
+    align-items: center;
+    min-height: 3rem;
+    border-bottom: 1px solid var(--border-color);
+    position: relative;
+    min-width: min-content;
+}
+
+/* Видалити старий task-info */
+.gantt-row .task-info {
+    display: none;
+}

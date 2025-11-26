@@ -149,9 +149,53 @@
             </section>
         </aside>
 
-        <!-- Gantt Chart -->
+        <!-- NEW: Tasks Container for task names -->
+        <section class="tasks-container">
+            <div class="tasks-header"> <!-- заголовок для вирівнювання з timeline -->
+                <div class="task-header-placeholder">{{ t('tasks') }}</div>
+            </div>
+            <div class="tasks-list">
+                <div v-for="task in filteredTasks" :key="task.id"
+                     class="task-row"
+                     :class="{ 'task-row--highlight': isTaskHighlighted(task) }">
+
+                    <div class="task-info">
+                        <div class="task-name" contenteditable="true"
+                             @blur="updateTaskProperty(task, 'name', $event)"
+                             @keydown.enter="$event.target.blur()">
+                            {{ task.name }}
+                        </div>
+                        <div class="task-dates">
+                        <span contenteditable="true"
+                              @blur="updateTaskProperty(task, 'start', $event)"
+                              @keydown.enter="$event.target.blur()">
+                            {{ formatDate(task.start) }}
+                        </span>
+                            -
+                            <span contenteditable="true"
+                                  @blur="updateTaskProperty(task, 'end', $event)"
+                                  @keydown.enter="$event.target.blur()">
+                            {{ formatDate(task.end) }}
+                        </span>
+                        </div>
+                        <div class="task-tags">
+                        <span v-for="tag in task.tags" :key="tag" class="task-tag">
+                            {{ tag }}
+                        </span>
+                        </div>
+                    </div>
+
+                    <div class="task-actions">
+                        <button @click="editTask(task)" class="btn-icon" :title="t('edit')">✎</button>
+                        <button @click="deleteTask(task.id)" class="btn-icon" :title="t('delete')">×</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Gantt Chart - тільки timeline + бари -->
         <section class="gantt-container">
-            <!-- Timeline Header with Scroll -->
+            <!-- Timeline Header -->
             <div class="timeline-header" ref="timelineHeader" @scroll="syncScroll">
                 <div class="timeline-header-inner" :style="timelineGridStyles">
                     <div v-for="cell in timelineCells"
@@ -165,43 +209,14 @@
                 </div>
             </div>
 
-
-            <!-- Gantt Chart Body with Scroll -->
+            <!-- Gantt Body - тільки бари завдань -->
             <div class="gantt-body" ref="ganttBody" @scroll="syncScroll">
                 <div class="gantt-body-inner" :style="timelineGridStyles">
                     <div v-for="task in filteredTasks" :key="task.id"
                          class="gantt-row"
                          :class="{ 'gantt-row--highlight': isTaskHighlighted(task) }">
 
-                        <!-- Task Info (Sticky) -->
-                        <div class="task-info">
-                            <div class="task-name"
-                                 contenteditable="true"
-                                 @blur="updateTaskProperty(task, 'name', $event)"
-                                 @keydown.enter="$event.target.blur()">
-                                {{ task.name }}
-                            </div>
-                            <div class="task-dates">
-                        <span contenteditable="true"
-                              @blur="updateTaskProperty(task, 'start', $event)"
-                              @keydown.enter="$event.target.blur()">
-                            {{ formatDate(task.start) }}
-                        </span>
-                                -
-                                <span contenteditable="true"
-                                      @blur="updateTaskProperty(task, 'end', $event)"
-                                      @keydown.enter="$event.target.blur()">
-                            {{ formatDate(task.end) }}
-                        </span>
-                            </div>
-                            <div class="task-tags">
-                        <span v-for="tag in task.tags" :key="tag" class="task-tag">
-                            {{ tag }}
-                        </span>
-                            </div>
-                        </div>
-
-                        <!-- Task Bar Area (Scrollable) -->
+                        <!-- Task Bar Area -->
                         <div class="task-timeline">
                             <div class="task-bar-container">
                                 <div class="task-bar"
@@ -214,27 +229,21 @@
                                     <div class="task-progress" :style="{ width: task.progress + '%' }"></div>
 
                                     <div class="task-bar-content">
-                                <span class="task-bar-name"
-                                      contenteditable="true"
-                                      @blur="updateTaskProperty(task, 'name', $event)"
-                                      @keydown.enter="$event.target.blur()">
-                                    {{ task.name }}
-                                </span>
+                                    <span class="task-bar-name"
+                                          contenteditable="true"
+                                          @blur="updateTaskProperty(task, 'name', $event)"
+                                          @keydown.enter="$event.target.blur()">
+                                        {{ task.name }}
+                                    </span>
                                         <span class="task-bar-progress"
                                               contenteditable="true"
                                               @blur="updateTaskProperty(task, 'progress', $event, true)"
                                               @keydown.enter="$event.target.blur()">
-                                    {{ task.progress }}%
-                                </span>
+                                        {{ task.progress }}%
+                                    </span>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-
-                        <!-- Task Actions -->
-                        <div class="task-actions">
-                            <button @click="editTask(task)" class="btn-icon" :title="t('edit')">✎</button>
-                            <button @click="deleteTask(task.id)" class="btn-icon" :title="t('delete')">×</button>
                         </div>
                     </div>
                 </div>
