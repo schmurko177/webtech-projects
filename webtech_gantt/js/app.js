@@ -3,486 +3,401 @@ const { createApp } = Vue;
 createApp({
     data() {
         return {
-            // i18n
-            langData: {
-                sk: {},
-                en: {}
-            },
+            // UI State
             ui: {
                 lang: 'sk',
                 theme: 'light',
                 zoom: 'day',
-                printShowDate: true,
-                scrollPos: 0
+                printShowDate: true
             },
 
+            // Settings
             settings: {
                 startDate: '2025-01-01',
                 endDate: '2025-12-31'
             },
 
+            // Task Form
             taskForm: {
-                editId: null,
                 name: '',
                 start: '',
                 end: '',
-                color: '#1976d2',
                 progress: 0,
+                color: '#3b82f6',
                 tags: ''
             },
+            editingTask: null,
 
+            // Filters
             filters: {
                 search: '',
                 tag: ''
             },
 
+            // Data
             tasks: [],
             legend: [],
 
-            dragIndex: null,
-            dragOverIndex: null,
+            // Drag & Drop
+            dragState: {
+                draggedId: null,
+                dragOverId: null
+            },
 
-            timelineScrollMax: 0,
-
-            // НОВЕ: вибрана задача
-            selectedTaskId: null
+            // Localization
+            translations: {
+                sk: {},
+                en: {}
+            }
         };
     },
 
     computed: {
-        today() {
+        currentDate() {
             const now = new Date();
-            now.setHours(0, 0, 0, 0);
-            return now;
+            return now.toLocaleDateString(this.ui.lang, {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
         },
 
-        formattedToday() {
-            const d = this.today;
-            const options = { weekday: 'long', year: 'numeric', month: '2-digit', day: '2-digit' };
-            return d.toLocaleDateString(this.ui.lang === 'sk' ? 'sk-SK' : 'en-US', options);
-        },
+        filteredTasks() {
+            let tasks = [...this.tasks];
 
-        startDateObj() {
-            const base = this.parseDate(this.settings.startDate);
-            const taskStarts = this.tasks
-                .map(t => this.parseDate(t.start))
-                .filter(Boolean);
-
-            if (!taskStarts.length) return base;
-            const minTask = new Date(Math.min(...taskStarts));
-            if (!base || minTask < base) return minTask;
-            return base;
-        },
-
-        endDateObj() {
-            const base = this.parseDate(this.settings.endDate);
-            const taskEnds = this.tasks
-                .map(t => this.parseDate(t.end))
-                .filter(Boolean);
-
-            if (!taskEnds.length) return base;
-            const maxTask = new Date(Math.max(...taskEnds));
-            if (!base || maxTask > base) return maxTask;
-            return base;
-        },
-
-        totalDays() {
-            if (!this.startDateObj || !this.endDateObj) return 0;
-            const diff = (this.endDateObj - this.startDateObj) / (1000 * 60 * 60 * 24);
-            return diff >= 0 ? Math.floor(diff) + 1 : 0;
-        },
-
-        visibleTasks() {
-            let list = [...this.tasks];
-
-            // filter by tag
-            if (this.filters.tag.trim()) {
-                const tag = this.filters.tag.toLowerCase();
-                list = list.filter(task =>
-                    task.tags.some(t => t.toLowerCase().includes(tag))
+            // Filter by tag
+            if (this.filters.tag) {
+                tasks = tasks.filter(task =>
+                    task.tags.includes(this.filters.tag)
                 );
             }
 
-            // search by text
-            if (this.filters.search.trim()) {
-                const q = this.filters.search.toLowerCase();
-                list = list.filter(task =>
-                    task.name.toLowerCase().includes(q) ||
-                    task.tags.some(t => t.toLowerCase().includes(q))
+            // Search
+            if (this.filters.search) {
+                const query = this.filters.search.toLowerCase();
+                tasks = tasks.filter(task =>
+                    task.name.toLowerCase().includes(query) ||
+                    task.tags.some(tag => tag.toLowerCase().includes(query))
                 );
             }
 
-            return list;
+            return tasks;
         },
 
-        // timeline cells depending on zoom level
+        allTags() {
+            const tags = new Set();
+            this.tasks.forEach(task => {
+                task.tags.forEach(tag => tags.add(tag));
+            });
+            return Array.from(tags).sort();
+        },
+
         timelineCells() {
+            if (!this.settings.startDate || !this.settings.endDate) return [];
+
+            const start = new Date(this.settings.startDate);
+            const end = new Date(this.settings.endDate);
             const cells = [];
-            if (!this.startDateObj || !this.endDateObj) return cells;
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
 
-            const start = new Date(this.startDateObj);
-            const end = new Date(this.endDateObj);
+            const current = new Date(start);
 
-            if (this.ui.zoom === 'day') {
-                let cur = new Date(start);
-                while (cur <= end) {
-                    cells.push({
-                        key: cur.toISOString().slice(0, 10),
-                        date: new Date(cur),
-                        label: cur.getDate()
-                    });
-                    cur.setDate(cur.getDate() + 1);
+            while (current <= end) {
+                let label, key;
+                const cellDate = new Date(current);
+                let isToday = false;
+
+                // Check if this cell contains today's date
+                switch (this.ui.zoom) {
+                    case 'day':
+                        isToday = cellDate.getTime() === today.getTime();
+                        label = cellDate.getDate();
+                        key = cellDate.toISOString().split('T')[0];
+                        current.setDate(current.getDate() + 1);
+                        break;
+
+                    case 'week':
+                        const weekStart = new Date(cellDate);
+                        const weekEnd = new Date(cellDate);
+                        weekEnd.setDate(weekEnd.getDate() + 6);
+
+                        // Check if today is within this week
+                        isToday = today >= weekStart && today <= weekEnd;
+
+                        label = `${weekStart.getDate()}.${weekStart.getMonth()+1}. - ${weekEnd.getDate()}.${weekEnd.getMonth()+1}.`;
+                        key = `w-${cellDate.getFullYear()}-${cellDate.getMonth()}-${Math.floor(cellDate.getDate() / 7)}`;
+                        current.setDate(current.getDate() + 7);
+                        break;
+
+                    case 'month':
+                        const monthStart = new Date(cellDate.getFullYear(), cellDate.getMonth(), 1);
+                        const monthEnd = new Date(cellDate.getFullYear(), cellDate.getMonth() + 1, 0);
+
+                        // Check if today is within this month
+                        isToday = today >= monthStart && today <= monthEnd;
+
+                        const monthNames = this.ui.lang === 'sk'
+                            ? ['Jan', 'Feb', 'Mar', 'Apr', 'Máj', 'Jún', 'Júl', 'Aug', 'Sep', 'Okt', 'Nov', 'Dec']
+                            : ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                        label = monthNames[cellDate.getMonth()];
+                        key = `m-${cellDate.getFullYear()}-${cellDate.getMonth()}`;
+                        current.setMonth(current.getMonth() + 1);
+                        break;
+
+                    case 'quarter':
+                        const quarter = Math.floor(cellDate.getMonth() / 3) + 1;
+                        const quarterStart = new Date(cellDate.getFullYear(), (quarter - 1) * 3, 1);
+                        const quarterEnd = new Date(cellDate.getFullYear(), quarter * 3, 0);
+
+                        // Check if today is within this quarter
+                        isToday = today >= quarterStart && today <= quarterEnd;
+
+                        label = `Q${quarter} ${cellDate.getFullYear()}`;
+                        key = `q-${cellDate.getFullYear()}-${quarter}`;
+                        current.setMonth(current.getMonth() + 3);
+                        break;
                 }
-            } else if (this.ui.zoom === 'week') {
-                let cur = new Date(start);
-                let index = 0;
-                while (cur <= end) {
-                    const label = this.t('week_short') + ' ' + (index + 1);
-                    cells.push({
-                        key: 'w' + index,
-                        date: new Date(cur),
-                        label
-                    });
-                    cur.setDate(cur.getDate() + 7);
-                    index++;
-                }
-            } else if (this.ui.zoom === 'month') {
-                let cur = new Date(start.getFullYear(), start.getMonth(), 1);
-                while (cur <= end) {
-                    const label = (cur.getMonth() + 1) + '/' + cur.getFullYear();
-                    cells.push({
-                        key: 'm' + cur.getFullYear() + '-' + cur.getMonth(),
-                        date: new Date(cur),
-                        label
-                    });
-                    cur.setMonth(cur.getMonth() + 1);
-                }
-            } else if (this.ui.zoom === 'quarter') {
-                let cur = new Date(start.getFullYear(), 0, 1);
-                while (cur <= end) {
-                    const q = Math.floor(cur.getMonth() / 3) + 1;
-                    const label = 'Q' + q + ' ' + cur.getFullYear();
-                    cells.push({
-                        key: 'q' + cur.getFullYear() + '-' + q,
-                        date: new Date(cur),
-                        label
-                    });
-                    cur.setMonth(cur.getMonth() + 3);
-                }
+
+                cells.push({
+                    label,
+                    key,
+                    isToday,
+                    date: new Date(cellDate)
+                });
             }
 
             return cells;
         },
 
-        // used for CSS grid template
-        timelineGridTemplate() {
-            const cols = this.timelineCells.length || 1;
-            return `repeat(${cols}, 60px)`;
+        // ЗМІНА: перейменовано з timelineGridStyle
+        timelineGridStyles() {
+            const cellWidth = this.getCellWidth();
+            const totalWidth = this.timelineCells.length * cellWidth;
+
+            return {
+                gridTemplateColumns: `repeat(${this.timelineCells.length}, ${cellWidth}px)`,
+                width: totalWidth + 'px'
+            };
         },
 
         todayPosition() {
-            if (!this.startDateObj || !this.endDateObj) return null;
-            const today = this.today;
-            if (today < this.startDateObj || today > this.endDateObj) return null;
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
 
-            const total = (this.endDateObj - this.startDateObj);
-            const offset = (today - this.startDateObj);
+            const start = new Date(this.settings.startDate);
+            const end = new Date(this.settings.endDate);
 
-            const percent = (offset / total) * 100;
-            return percent;
-        },
+            if (today < start || today > end) return null;
 
-        // чи показувати повзунок
-        timelineHasScroll() {
-            return this.timelineScrollMax > 0;
-        },
+            const total = end - start;
+            const passed = today - start;
 
-        timelineScrollWidth() {
-            return this.timelineCells.length * 60;
+            return (passed / total) * 100;
         }
     },
 
     methods: {
-        /* i18n */
+        // Localization
         t(key) {
-            const langObj = this.langData[this.ui.lang] || {};
-            return langObj[key] || key;
+            return this.translations[this.ui.lang]?.[key] || key;
         },
 
-        async loadLangData() {
-            const loadLang = async (code) => {
-                const resp = await fetch(`data/i18n-${code}.json`);
-                this.langData[code] = await resp.json();
-            };
-            await Promise.all([loadLang('sk'), loadLang('en')]);
+        async loadTranslations() {
+            try {
+                const [skResp, enResp] = await Promise.all([
+                    fetch('data/i18n-sk.json'),
+                    fetch('data/i18n-en.json')
+                ]);
+
+                this.translations.sk = await skResp.json();
+                this.translations.en = await enResp.json();
+            } catch (error) {
+                console.error('Failed to load translations:', error);
+            }
         },
 
-        onLangChange() {
-            localStorage.setItem('gantt_lang', this.ui.lang);
-        },
-
+        // Theme
         toggleTheme() {
             this.ui.theme = this.ui.theme === 'light' ? 'dark' : 'light';
-            localStorage.setItem('gantt_theme', this.ui.theme);
+            this.applyTheme();
+            this.saveUI();
         },
 
-        onRangeChange() {
-            if (!this.settings.startDate || !this.settings.endDate) return;
-            if (this.settings.endDate < this.settings.startDate) {
-                // simple fix: swap if user made mistake
-                const tmp = this.settings.startDate;
-                this.settings.startDate = this.settings.endDate;
-                this.settings.endDate = tmp;
+        applyTheme() {
+            document.documentElement.setAttribute('data-theme', this.ui.theme);
+        },
+
+        // Task Management
+        saveTask() {
+            if (!this.taskForm.name || !this.taskForm.start || !this.taskForm.end) {
+                alert(this.t('fill_required_fields'));
+                return;
             }
-            this.saveSettings();
-        },
 
-        parseDate(str) {
-            if (!str) return null;
-            const d = new Date(str);
-            if (Number.isNaN(d.getTime())) return null;
-            d.setHours(0, 0, 0, 0);
-            return d;
-        },
+            const taskData = {
+                name: this.taskForm.name,
+                start: this.taskForm.start,
+                end: this.taskForm.end,
+                progress: Math.max(0, Math.min(100, this.taskForm.progress)),
+                color: this.taskForm.color,
+                tags: this.taskForm.tags.split(',').map(tag => tag.trim()).filter(Boolean)
+            };
 
-        clampDateToRange(date) {
-            if (!this.startDateObj || !this.endDateObj || !date) return date;
-            if (date < this.startDateObj) return new Date(this.startDateObj);
-            if (date > this.endDateObj) return new Date(this.endDateObj);
-            return date;
-        },
-
-        submitTask() {
-            if (!this.taskForm.name || !this.taskForm.start || !this.taskForm.end) return;
-
-            const tags = this.taskForm.tags
-                .split(',')
-                .map(t => t.trim())
-                .filter(Boolean);
-
-            if (this.taskForm.editId) {
-                const task = this.tasks.find(t => t.id === this.taskForm.editId);
-                if (task) {
-                    task.name = this.taskForm.name;
-                    task.start = this.taskForm.start;
-                    task.end = this.taskForm.end;
-                    task.color = this.taskForm.color;
-                    task.progress = this.normalizeProgress(this.taskForm.progress);
-                    task.tags = tags;
-                }
+            if (this.editingTask) {
+                Object.assign(this.editingTask, taskData);
+                this.editingTask = null;
             } else {
                 this.tasks.push({
-                    id: 't-' + Date.now() + '-' + Math.random().toString(16).slice(2),
-                    name: this.taskForm.name,
-                    start: this.taskForm.start,
-                    end: this.taskForm.end,
-                    color: this.taskForm.color,
-                    progress: this.normalizeProgress(this.taskForm.progress),
-                    tags
+                    id: 'task-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9),
+                    ...taskData
                 });
             }
 
+            this.clearForm();
             this.saveTasks();
-            this.resetTaskForm();
-        },
-
-        normalizeProgress(value) {
-            let v = Number(value) || 0;
-            if (v < 0) v = 0;
-            if (v > 100) v = 100;
-            return v;
-        },
-
-        updateTimelineScroll() {
-            const el = this.$refs.timelineScroll;
-            if (!el) return;
-            const max = el.scrollWidth - el.clientWidth;
-            this.timelineScrollMax = max > 0 ? max : 0;
-
-            // якщо після ресайзу полоса стала коротша — підрізаємо scrollPos
-            if (this.timelineScrollMax === 0) {
-                this.ui.scrollPos = 0;
-                if (el.scrollLeft !== 0) el.scrollLeft = 0;
-            } else {
-                const clamped = Math.min(100, Math.max(0, this.ui.scrollPos));
-                this.ui.scrollPos = clamped;
-                el.scrollLeft = (clamped / 100) * this.timelineScrollMax;
-            }
-        },
-
-        onTimelineSlider() {
-            const el = this.$refs.timelineScroll;
-            if (!el) return;
-            el.scrollLeft = (this.ui.scrollPos / 100) * this.timelineScrollMax;
-        },
-
-        handleTimelineScroll() {
-            const el = this.$refs.timelineScroll;
-            if (!el || this.timelineScrollMax <= 0) return;
-            this.ui.scrollPos = (el.scrollLeft / this.timelineScrollMax) * 100;
-        },
-
-        resetTaskForm() {
-            this.taskForm = {
-                editId: null,
-                name: '',
-                start: '',
-                end: '',
-                color: '#1976d2',
-                progress: 0,
-                tags: ''
-            };
         },
 
         editTask(task) {
-            this.taskForm.editId = task.id;
-            this.taskForm.name = task.name;
-            this.taskForm.start = task.start;
-            this.taskForm.end = task.end;
-            this.taskForm.color = task.color;
-            this.taskForm.progress = task.progress;
-            this.taskForm.tags = task.tags.join(', ');
-            this.selectedTaskId = task.id;
+            this.editingTask = task;
+            this.taskForm = { ...task, tags: task.tags.join(', ') };
         },
 
-        deleteTask(id) {
-            this.tasks = this.tasks.filter(t => t.id !== id);
-            if (this.selectedTaskId === id) {
-                this.selectedTaskId = null;
+        deleteTask(taskId) {
+            if (confirm(this.t('confirm_delete'))) {
+                this.tasks = this.tasks.filter(task => task.id !== taskId);
+                this.saveTasks();
             }
-            this.saveTasks();
         },
 
-        /* inline edit in list */
-        onInlineEdit(task, field, event) {
-            const text = event.target.innerText.trim();
+        clearForm() {
+            this.taskForm = {
+                name: '',
+                start: '',
+                end: '',
+                progress: 0,
+                color: '#3b82f6',
+                tags: ''
+            };
+            this.editingTask = null;
+        },
 
-            if (field === 'name') {
-                task.name = text;
-            } else if (field === 'start' || field === 'end') {
-                task[field] = text;
-            } else if (field === 'progress') {
-                task.progress = this.normalizeProgress(text);
-            } else if (field === 'tags') {
-                task.tags = text
-                    .split(',')
-                    .map(t => t.trim())
-                    .filter(Boolean);
+        cancelEdit() {
+            this.clearForm();
+        },
+
+        // Inline Editing
+        updateTaskProperty(task, property, event, isNumber = false) {
+            let value = event.target.innerText.trim();
+
+            if (isNumber) {
+                value = parseInt(value) || 0;
+                value = Math.max(0, Math.min(100, value));
             }
 
+            if (property === 'start' || property === 'end') {
+                // Validate date
+                const date = new Date(value);
+                if (isNaN(date.getTime())) {
+                    event.target.innerText = task[property];
+                    return;
+                }
+                value = date.toISOString().split('T')[0];
+            }
+
+            task[property] = value;
             this.saveTasks();
         },
 
-        isTaskHighlighted(task) {
-            const s = this.filters.search.trim().toLowerCase();
-            if (!s) return false;
-            return (
-                task.name.toLowerCase().includes(s) ||
-                task.tags.some(t => t.toLowerCase().includes(s))
-            );
+        // Drag & Drop
+        onDragStart(taskId) {
+            this.dragState.draggedId = taskId;
         },
 
-        /* drag & drop ordering */
-        onDragStart(index) {
-            this.dragIndex = index;
-            this.dragOverIndex = null;
+        onDragOver(taskId) {
+            if (taskId !== this.dragState.draggedId) {
+                this.dragState.dragOverId = taskId;
+            }
         },
 
-        onDrop(index) {
-            if (this.dragIndex === null) return;
-            const arr = [...this.visibleTasks];
-            const moved = arr[this.dragIndex];
-            arr.splice(this.dragIndex, 1);
-            arr.splice(index, 0, moved);
+        onDrop(taskId) {
+            if (!this.dragState.draggedId || this.dragState.draggedId === taskId) return;
 
-            // Rebuild tasks in new order according to visible order
-            const ids = arr.map(t => t.id);
-            this.tasks.sort((a, b) => ids.indexOf(a.id) - ids.indexOf(b.id));
+            const fromIndex = this.tasks.findIndex(t => t.id === this.dragState.draggedId);
+            const toIndex = this.tasks.findIndex(t => t.id === taskId);
 
-            this.dragIndex = null;
-            this.dragOverIndex = null;
-            this.saveTasks();
+            if (fromIndex !== -1 && toIndex !== -1) {
+                const [movedTask] = this.tasks.splice(fromIndex, 1);
+                this.tasks.splice(toIndex, 0, movedTask);
+                this.saveTasks();
+            }
+
+            this.dragState.draggedId = null;
+            this.dragState.dragOverId = null;
         },
 
-        /* timeline bar style */
+        // Gantt Chart
+        getCellWidth() {
+            switch (this.ui.zoom) {
+                case 'day': return 60;
+                case 'week': return 100;
+                case 'month': return 120;
+                case 'quarter': return 150;
+                default: return 60;
+            }
+        },
+
+        // ЗМІНА: оновлений метод для правильного позиціонування при скролі
         getTaskBarStyle(task) {
-            const MS_PER_DAY = 86400000;
-            const DAY_WIDTH = 60;
+            const start = new Date(task.start);
+            const end = new Date(task.end);
+            const rangeStart = new Date(this.settings.startDate);
+            const rangeEnd = new Date(this.settings.endDate);
 
-            const start = this.parseDate(task.start);
-            const end = this.parseDate(task.end);
-            if (!start || !end || !this.startDateObj || !this.endDateObj) {
+            // Clamp task to visible range
+            const visibleStart = start < rangeStart ? rangeStart : start;
+            const visibleEnd = end > rangeEnd ? rangeEnd : end;
+
+            if (visibleStart > visibleEnd) {
                 return { display: 'none' };
             }
 
-            const clampedStart = this.clampDateToRange(start);
-            const clampedEnd = this.clampDateToRange(end);
+            const totalDuration = rangeEnd - rangeStart;
+            const startOffset = visibleStart - rangeStart;
+            const taskDuration = visibleEnd - visibleStart;
 
-            const offsetDays = Math.floor((clampedStart - this.startDateObj) / MS_PER_DAY);
-            let totalDays = Math.floor((clampedEnd - clampedStart) / MS_PER_DAY) + 1;
-            if (totalDays <= 0) totalDays = 1;
+            const cellWidth = this.getCellWidth();
+            const totalWidth = this.timelineCells.length * cellWidth;
+
+            const left = (startOffset / totalDuration) * totalWidth;
+            const width = (taskDuration / totalDuration) * totalWidth;
 
             return {
-                left: offsetDays * DAY_WIDTH + "px",
-                width: totalDays * DAY_WIDTH + "px",
+                left: Math.max(left, 0) + 'px',
+                width: Math.max(width, 20) + 'px', // Minimum width for visibility
                 backgroundColor: task.color,
-                position: "absolute",
-                height: "22px",
-                borderRadius: "6px"
+                position: 'absolute'
             };
         },
 
-        // вибір задачі (клік по рядку або по бару)
-        selectTask(task) {
-            this.selectedTaskId = task.id;
+        isTaskHighlighted(task) {
+            if (!this.filters.search) return false;
+            const query = this.filters.search.toLowerCase();
+            return task.name.toLowerCase().includes(query) ||
+                task.tags.some(tag => tag.toLowerCase().includes(query));
         },
 
-        /* import / export JSON */
-        exportJson() {
-            const data = {
-                tasks: this.tasks,
-                legend: this.legend,
-                settings: this.settings
-            };
-
-            const blob = new Blob([JSON.stringify(data, null, 2)], {
-                type: 'application/json'
-            });
-
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'gantt-project.json';
-            a.click();
-            URL.revokeObjectURL(url);
+        formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString(this.ui.lang);
         },
 
-        importJson(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                try {
-                    const json = JSON.parse(e.target.result);
-                    if (Array.isArray(json.tasks)) this.tasks = json.tasks;
-                    if (Array.isArray(json.legend)) this.legend = json.legend;
-                    if (json.settings) this.settings = json.settings;
-                    this.saveTasks();
-                    this.saveLegend();
-                    this.saveSettings();
-                } catch (err) {
-                    console.error('Invalid JSON', err);
-                }
-            };
-            reader.readAsText(file);
-        },
-
-        /* legend */
+        // Legend
         addLegendItem() {
             this.legend.push({
-                id: 'l-' + Date.now() + '-' + Math.random().toString(16).slice(2),
-                color: '#1976d2',
+                id: 'legend-' + Date.now(),
+                color: '#6b7280',
                 label: ''
             });
             this.saveLegend();
@@ -493,116 +408,184 @@ createApp({
             this.saveLegend();
         },
 
-        saveLegend() {
-            localStorage.setItem('gantt_legend', JSON.stringify(this.legend));
+        // Import/Export
+        exportData() {
+            const data = {
+                tasks: this.tasks,
+                settings: this.settings,
+                legend: this.legend,
+                ui: this.ui
+            };
+
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'gantt-project.json';
+            a.click();
+            URL.revokeObjectURL(url);
         },
 
-        /* localStorage */
-        saveTasks() {
-            localStorage.setItem('gantt_tasks', JSON.stringify(this.tasks));
-            this.$nextTick(() => this.updateTimelineScroll());
+        importData() {
+            this.$refs.importFile.click();
         },
 
-        saveSettings() {
-            localStorage.setItem('gantt_settings', JSON.stringify(this.settings));
-        },
+        handleImport(event) {
+            const file = event.target.files[0];
+            if (!file) return;
 
-        restoreFromStorage() {
-            const tasks = localStorage.getItem('gantt_tasks');
-            if (tasks) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
                 try {
-                    this.tasks = JSON.parse(tasks);
-                } catch (e) {
-                    this.tasks = [];
+                    const data = JSON.parse(e.target.result);
+
+                    if (data.tasks) this.tasks = data.tasks;
+                    if (data.settings) this.settings = data.settings;
+                    if (data.legend) this.legend = data.legend;
+                    if (data.ui) {
+                        this.ui = { ...this.ui, ...data.ui };
+                        this.applyTheme();
+                    }
+
+                    this.saveAll();
+                    event.target.value = ''; // Reset file input
+                } catch (error) {
+                    alert(this.t('import_error'));
+                    console.error('Import error:', error);
                 }
-            }
-
-            const legend = localStorage.getItem('gantt_legend');
-            if (legend) {
-                try {
-                    this.legend = JSON.parse(legend);
-                } catch (e) {
-                    this.legend = [];
-                }
-            }
-
-            const settings = localStorage.getItem('gantt_settings');
-            if (settings) {
-                try {
-                    this.settings = JSON.parse(settings);
-                } catch (e) {
-                    /* ignore */
-                }
-            }
-
-            const lang = localStorage.getItem('gantt_lang');
-            if (lang) this.ui.lang = lang;
-
-            const theme = localStorage.getItem('gantt_theme');
-            if (theme) this.ui.theme = theme;
-
-            const printShowDate = localStorage.getItem('gantt_print_date');
-            if (printShowDate !== null) {
-                this.ui.printShowDate = printShowDate === 'true';
-            }
+            };
+            reader.readAsText(file);
         },
 
-        printDiagram() {
-            localStorage.setItem('gantt_print_date', this.ui.printShowDate ? 'true' : 'false');
-            if (!this.ui.printShowDate) {
-                document.body.classList.add('gantt-app--no-print-date');
-            } else {
-                document.body.classList.remove('gantt-app--no-print-date');
-            }
+        // Print
+        printChart() {
             window.print();
         },
 
-        syncScrollbars() {
-            const top = this.$refs.scrollTopSync;
-            const main = this.$refs.timelineScroll;
-            if (!top || !main) return;
-
-            top.scrollLeft = main.scrollLeft;
-
-            top.onscroll = () => {
-                main.scrollLeft = top.scrollLeft;
-            };
-            main.onscroll = () => {
-                top.scrollLeft = main.scrollLeft;
-            };
+        // Storage
+        saveTasks() {
+            localStorage.setItem('gantt-tasks', JSON.stringify(this.tasks));
         },
-    },
 
+        saveSettings() {
+            localStorage.setItem('gantt-settings', JSON.stringify(this.settings));
+        },
 
+        saveLegend() {
+            localStorage.setItem('gantt-legend', JSON.stringify(this.legend));
+        },
 
-    async mounted() {
-        await this.loadLangData();
-        this.restoreFromStorage();
+        saveUI() {
+            localStorage.setItem('gantt-ui', JSON.stringify(this.ui));
+        },
 
-        this.$nextTick(() => {
-            this.syncScrollbars();
+        saveAll() {
+            this.saveTasks();
+            this.saveSettings();
+            this.saveLegend();
+            this.saveUI();
+        },
 
-            const el = this.$refs.timelineScroll;
-            if (el) {
-                el.addEventListener('scroll', this.handleTimelineScroll);
+        loadAll() {
+            const tasks = localStorage.getItem('gantt-tasks');
+            const settings = localStorage.getItem('gantt-settings');
+            const legend = localStorage.getItem('gantt-legend');
+            const ui = localStorage.getItem('gantt-ui');
+
+            if (tasks) this.tasks = JSON.parse(tasks);
+            if (settings) this.settings = JSON.parse(settings);
+            if (legend) this.legend = JSON.parse(legend);
+            if (ui) {
+                this.ui = { ...this.ui, ...JSON.parse(ui) };
+                this.applyTheme();
+            }
+        },
+
+        // Scroll functionality
+        syncScroll(event) {
+            const source = event.target;
+            const isHeader = source === this.$refs.timelineHeader;
+            const target = isHeader ? this.$refs.ganttBody : this.$refs.timelineHeader;
+
+            if (target && source.scrollLeft !== target.scrollLeft) {
+                target.scrollLeft = source.scrollLeft;
+            }
+        },
+
+        scrollToDate(dateString) {
+            const date = new Date(dateString);
+            const rangeStart = new Date(this.settings.startDate);
+            const rangeEnd = new Date(this.settings.endDate);
+
+            if (date < rangeStart || date > rangeEnd) {
+                alert(this.t('date_out_of_range'));
+                return;
             }
 
-            this.updateTimelineScroll();
-        });
+            const totalDuration = rangeEnd - rangeStart;
+            const dateOffset = date - rangeStart;
 
-        window.addEventListener('resize', this.updateTimelineScroll);
-    },
+            const scrollPercent = (dateOffset / totalDuration);
 
-    beforeUnmount() {
-        const el = this.$refs.timelineScroll;
-        if (el) {
-            el.removeEventListener('scroll', this.handleTimelineScroll);
+            this.$nextTick(() => {
+                if (this.$refs.ganttBody) {
+                    const maxScroll = this.$refs.ganttBody.scrollWidth - this.$refs.ganttBody.clientWidth;
+                    this.$refs.ganttBody.scrollLeft = scrollPercent * maxScroll;
+                    if (this.$refs.timelineHeader) {
+                        this.$refs.timelineHeader.scrollLeft = scrollPercent * maxScroll;
+                    }
+                }
+            });
+        },
+
+        scrollToToday() {
+            this.scrollToDate(new Date().toISOString().split('T')[0]);
+        },
+
+        initScrollSync() {
+            this.$nextTick(() => {
+                if (this.$refs.timelineHeader && this.$refs.ganttBody) {
+                    // Set initial scroll position
+                    this.$refs.timelineHeader.scrollLeft = 0;
+                    this.$refs.ganttBody.scrollLeft = 0;
+                }
+            });
         }
-        window.removeEventListener('resize', this.updateTimelineScroll);
     },
 
+    watch: {
+        // Reinitialize scroll when timeline changes
+        timelineCells: {
+            handler() {
+                this.initScrollSync();
+            },
+            deep: true
+        },
 
+        // Update scroll when zoom changes
+        'ui.zoom'() {
+            this.$nextTick(() => {
+                this.initScrollSync();
+            });
+        }
+    },
 
+    async mounted() {
+        await this.loadTranslations();
+        this.loadAll();
+        this.applyTheme();
 
+        // Set default dates if not set
+        if (!this.settings.startDate) {
+            const today = new Date();
+            this.settings.startDate = today.toISOString().split('T')[0];
+            this.settings.endDate = new Date(today.getFullYear() + 1, today.getMonth(), today.getDate())
+                .toISOString().split('T')[0];
+        }
 
+        // Initialize scroll after everything is rendered
+        this.$nextTick(() => {
+            this.initScrollSync();
+        });
+    }
 }).mount('#app');
