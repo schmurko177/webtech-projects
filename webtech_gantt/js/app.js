@@ -229,6 +229,28 @@ createApp({
             document.documentElement.setAttribute('data-theme', this.ui.theme);
         },
 
+        saveTasksToFile() {
+            const data = {
+                tasks: this.tasks,
+                settings: this.settings,
+                legend: this.legend,
+                ui: this.ui,
+                lastSaved: new Date().toISOString()
+            };
+
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+
+            // Автоматичне завантаження файлу
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'gantt-project-data.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        },
+
         // Task Management
         saveTask() {
             if (!this.taskForm.name || !this.taskForm.start || !this.taskForm.end) {
@@ -256,12 +278,7 @@ createApp({
             }
 
             this.clearForm();
-            this.saveTasks();
-        },
-
-        editTask(task) {
-            this.editingTask = task;
-            this.taskForm = { ...task, tags: task.tags.join(', ') };
+            this.saveTasks(); // Залишаємо і localStorage для швидкості
         },
 
         deleteTask(taskId) {
@@ -270,6 +287,12 @@ createApp({
                 this.saveTasks();
             }
         },
+
+        editTask(task) {
+            this.editingTask = task;
+            this.taskForm = { ...task, tags: task.tags.join(', ') };
+        },
+
 
         clearForm() {
             this.taskForm = {
@@ -290,6 +313,12 @@ createApp({
         // Inline Editing
         updateTaskProperty(task, property, event, isNumber = false) {
             let value = event.target.innerText.trim();
+
+            // ДОДАВ: перевірка на порожнє значення
+            if (!value) {
+                event.target.innerText = task[property];
+                return;
+            }
 
             if (isNumber) {
                 value = parseInt(value) || 0;
@@ -388,9 +417,47 @@ createApp({
                 task.tags.some(tag => tag.toLowerCase().includes(query));
         },
 
+        updateTaskDate(task, property, event) {
+            let value = event.target.innerText.trim();
+
+            // Якщо значення порожнє або не змінилося - відмінити
+            if (!value || value === this.formatDate(task[property])) {
+                event.target.innerText = this.formatDate(task[property]);
+                return;
+            }
+
+            // Спроба парсингу дати
+            const date = new Date(value);
+            if (isNaN(date.getTime())) {
+                // Якщо дата невалідна - відновити старе значення
+                event.target.innerText = this.formatDate(task[property]);
+                return;
+            }
+
+            // Оновити значення
+            task[property] = date.toISOString().split('T')[0];
+            this.saveTasks();
+        },
+
+// Відміна редагування по Escape
+        cancelDateEdit(event) {
+            event.target.blur();
+        },
+
+// Покращений метод форматування дати
         formatDate(dateString) {
-            const date = new Date(dateString);
-            return date.toLocaleDateString(this.ui.lang);
+            try {
+                const date = new Date(dateString);
+                if (isNaN(date.getTime())) return dateString;
+
+                return date.toLocaleDateString(this.ui.lang, {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric'
+                });
+            } catch (error) {
+                return dateString;
+            }
         },
 
         // Legend
@@ -611,6 +678,7 @@ createApp({
         this.loadAll();
         this.applyTheme();
         this.syncRowHeights();
+
 
         // Set default dates if not set
         if (!this.settings.startDate) {

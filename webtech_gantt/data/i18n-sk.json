@@ -47,6 +47,8 @@
   "date_out_of_range": "Dátum je mimo vybraného rozsahu",
   "current_week": "Tento týždeň",
   "current_month": "Tento mesiac",
-  "current_quarter": "Tento štvrťrok"
+  "current_quarter": "Tento štvrťrok",
+  "save_to_file": "Uložiť do súboru",
+  "tasks": "Úlohy"
 
 }

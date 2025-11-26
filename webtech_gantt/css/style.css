@@ -435,6 +435,16 @@ body {
     line-height: 1.2;
 }
 
+.task-dates [contenteditable="true"] {
+    border: 1px dashed transparent;
+    transition: all 0.2s;
+}
+
+.task-dates [contenteditable="true"]:focus {
+    border-color: var(--primary-color);
+    background: rgba(37, 99, 235, 0.05);
+}
+
 .task-timeline {
     flex: 1;
     position: relative;
@@ -751,4 +761,25 @@ body {
 /* Видалити старий task-info */
 .gantt-row .task-info {
     display: none;
+}
+
+/* Додайте в style.css */
+.date-editable {
+    border: 1px dashed transparent;
+    border-radius: 0.25rem;
+    padding: 0.125rem 0.25rem;
+    transition: all 0.2s;
+    min-width: 70px;
+    display: inline-block;
+    text-align: center;
+}
+
+.date-editable:focus {
+    border-color: var(--primary-color);
+    background: rgba(37, 99, 235, 0.05);
+    outline: none;
+}
+
+.date-editable:hover {
+    border-color: var(--border-color);
 }

@@ -128,7 +128,8 @@
             <section class="sidebar-section">
                 <h3>{{ t('import_export') }}</h3>
                 <div class="form-actions">
-                    <button @click="exportData" class="btn btn-primary">{{ t('export') }}</button>
+                    <button @click="saveTasksToFile" class="btn btn-primary">{{ t('save_to_file') }}</button>
+                    <button @click="exportData" class="btn btn-secondary">{{ t('export') }}</button>
                     <button @click="importData" class="btn btn-secondary">{{ t('import') }}</button>
                     <input type="file" ref="importFile" @change="handleImport" accept=".json" style="display: none;">
                 </div>
@@ -165,18 +166,23 @@
                              @keydown.enter="$event.target.blur()">
                             {{ task.name }}
                         </div>
+                        <!-- Змініть в index.html ці блоки -->
                         <div class="task-dates">
-                        <span contenteditable="true"
-                              @blur="updateTaskProperty(task, 'start', $event)"
-                              @keydown.enter="$event.target.blur()">
-                            {{ formatDate(task.start) }}
-                        </span>
-                            -
-                            <span contenteditable="true"
-                                  @blur="updateTaskProperty(task, 'end', $event)"
-                                  @keydown.enter="$event.target.blur()">
-                            {{ formatDate(task.end) }}
-                        </span>
+                            <span class="date-editable"
+                                  contenteditable="true"
+                                  @blur="updateTaskDate(task, 'start', $event)"
+                                  @keydown.enter="$event.target.blur()"
+                                  @keydown.escape="cancelDateEdit($event)">
+                                {{ formatDate(task.start) }}
+                            </span>
+                                                    -
+                                                    <span class="date-editable"
+                                                          contenteditable="true"
+                                                          @blur="updateTaskDate(task, 'end', $event)"
+                                                          @keydown.enter="$event.target.blur()"
+                                                          @keydown.escape="cancelDateEdit($event)">
+                                {{ formatDate(task.end) }}
+                            </span>
                         </div>
                         <div class="task-tags">
                         <span v-for="tag in task.tags" :key="tag" class="task-tag">

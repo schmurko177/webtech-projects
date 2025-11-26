@@ -47,5 +47,7 @@
   "date_out_of_range": "Date is outside selected range",
   "current_week": "This week",
   "current_month": "This month",
-  "current_quarter": "This quarter"
+  "current_quarter": "This quarter",
+  "save_to_file": "Save to file",
+  "tasks": "Tasks"
 }
