@@ -110,33 +110,56 @@ createApp({
                 const cellDate = new Date(current);
                 let isToday = false;
 
-                // Check if this cell contains today's date
+                // ДЕБАГ: виведемо дати для перевірки
+                console.log('Current cell date:', cellDate.toISOString().split('T')[0]);
+                console.log('Today:', today.toISOString().split('T')[0]);
+
                 switch (this.ui.zoom) {
                     case 'day':
-                        isToday = cellDate.getTime() === today.getTime();
-                        label = cellDate.getDate();
+                        // Для дня: порівнюємо дати без часу
+                        const cellDay = new Date(cellDate);
+                        cellDay.setHours(0, 0, 0, 0);
+                        isToday = cellDay.getTime() === today.getTime();
+
+                        const dayMonthNames = this.ui.lang === 'sk'
+                            ? ['Jan', 'Feb', 'Mar', 'Apr', 'Máj', 'Jún', 'Júl', 'Aug', 'Sep', 'Okt', 'Nov', 'Dec']
+                            : ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+                        // Показуємо місяць тільки для першого дня місяця або для сьогодні
+                        if (cellDate.getDate() === 1 || isToday) {
+                            label = `${cellDate.getDate()}. ${dayMonthNames[cellDate.getMonth()]}`;
+                        } else {
+                            label = cellDate.getDate();
+                        }
+
                         key = cellDate.toISOString().split('T')[0];
                         current.setDate(current.getDate() + 1);
                         break;
 
                     case 'week':
+                        // Для тижня: перевіряємо чи сьогодні в цьому тижні
                         const weekStart = new Date(cellDate);
+                        weekStart.setHours(0, 0, 0, 0);
                         const weekEnd = new Date(cellDate);
                         weekEnd.setDate(weekEnd.getDate() + 6);
+                        weekEnd.setHours(23, 59, 59, 999);
 
-                        // Check if today is within this week
                         isToday = today >= weekStart && today <= weekEnd;
 
-                        label = `${weekStart.getDate()}.${weekStart.getMonth()+1}. - ${weekEnd.getDate()}.${weekEnd.getMonth()+1}.`;
+                        // Форматуємо місяці для більш читабельного вигляду
+                        const weekStartMonth = weekStart.getMonth() + 1;
+                        const weekEndMonth = weekEnd.getMonth() + 1;
+                        label = `${weekStart.getDate()}.${weekStartMonth} - ${weekEnd.getDate()}.${weekEndMonth}`;
                         key = `w-${cellDate.getFullYear()}-${cellDate.getMonth()}-${Math.floor(cellDate.getDate() / 7)}`;
                         current.setDate(current.getDate() + 7);
                         break;
 
                     case 'month':
                         const monthStart = new Date(cellDate.getFullYear(), cellDate.getMonth(), 1);
+                        monthStart.setHours(0, 0, 0, 0);
                         const monthEnd = new Date(cellDate.getFullYear(), cellDate.getMonth() + 1, 0);
+                        monthEnd.setHours(23, 59, 59, 999);
 
-                        // Check if today is within this month
                         isToday = today >= monthStart && today <= monthEnd;
 
                         const monthNames = this.ui.lang === 'sk'
@@ -150,9 +173,10 @@ createApp({
                     case 'quarter':
                         const quarter = Math.floor(cellDate.getMonth() / 3) + 1;
                         const quarterStart = new Date(cellDate.getFullYear(), (quarter - 1) * 3, 1);
+                        quarterStart.setHours(0, 0, 0, 0);
                         const quarterEnd = new Date(cellDate.getFullYear(), quarter * 3, 0);
+                        quarterEnd.setHours(23, 59, 59, 999);
 
-                        // Check if today is within this quarter
                         isToday = today >= quarterStart && today <= quarterEnd;
 
                         label = `Q${quarter} ${cellDate.getFullYear()}`;
@@ -160,6 +184,9 @@ createApp({
                         current.setMonth(current.getMonth() + 3);
                         break;
                 }
+
+                // ДЕБАГ: виведемо результат перевірки
+                console.log('Is today:', isToday, 'for date:', cellDate.toISOString().split('T')[0]);
 
                 cells.push({
                     label,
@@ -323,6 +350,19 @@ createApp({
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
+        },
+
+        // Додайте цей метод для тестування
+        testTodayDetection() {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            console.log('Today:', today.toISOString().split('T')[0]);
+
+            this.timelineCells.forEach(cell => {
+                if (cell.isToday) {
+                    console.log('Today cell found:', cell);
+                }
+            });
         },
 
         // Task Management
@@ -740,6 +780,7 @@ createApp({
         // Initialize scroll after everything is rendered
         this.$nextTick(() => {
             this.initScrollSync();
+            this.testTodayDetection(); // Додайте цей виклик для тестування
         });
     }
 }).mount('#app');

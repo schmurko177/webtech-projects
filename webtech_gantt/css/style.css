@@ -645,6 +645,7 @@ body {
     right: 2px;
     font-size: 0.6rem;
     animation: pulse 2s infinite;
+    color: white;
 }
 
 @keyframes pulse {
@@ -660,6 +661,7 @@ body {
     font-weight: 700;
     box-shadow: 0 2px 4px rgba(220, 38, 38, 0.3);
     z-index: 2;
+    position: relative;
 }
 
 /* Different styling for dark theme */
