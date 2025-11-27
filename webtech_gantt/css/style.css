@@ -852,3 +852,30 @@ body {
 .date-editable:focus::after {
     opacity: 1;
 }
+
+/* Стилі для кнопок undo/redo */
+.btn-icon:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.btn-icon:not(:disabled):hover {
+    background: var(--bg-tertiary);
+    color: var(--primary-color);
+}
+
+/* Спеціальні стилі для стрілочок */
+.undo-redo-buttons {
+    display: flex;
+    gap: 0.25rem;
+}
+
+.undo-redo-buttons .btn-icon {
+    font-size: 1.2rem;
+    font-weight: bold;
+    width: 2rem;
+    height: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}

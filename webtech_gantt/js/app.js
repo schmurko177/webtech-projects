@@ -49,8 +49,18 @@ createApp({
             translations: {
                 sk: {},
                 en: {}
-            }
+            },
+
+            history: {
+                past: [],
+                present: null,
+                future: []
+            },
+            maxHistorySteps: 50
+
         };
+
+
     },
 
     computed: {
@@ -92,6 +102,14 @@ createApp({
                 task.tags.forEach(tag => tags.add(tag));
             });
             return Array.from(tags).sort();
+        },
+
+        canUndo() {
+            return this.history.past.length > 0;
+        },
+
+        canRedo() {
+            return this.history.future.length > 0;
         },
 
         timelineCells() {
@@ -269,6 +287,53 @@ createApp({
             }
         },
 
+        saveState() {
+            if (this.history.present) {
+                this.history.past.push(this.history.present);
+
+                // Обмежуємо розмір історії
+                if (this.history.past.length > this.maxHistorySteps) {
+                    this.history.past.shift();
+                }
+            }
+
+            this.history.present = {
+                tasks: JSON.parse(JSON.stringify(this.tasks)),
+                settings: JSON.parse(JSON.stringify(this.settings)),
+                legend: JSON.parse(JSON.stringify(this.legend))
+            };
+
+            this.history.future = []; // Очищаємо майбутню історію при новій дії
+        },
+
+        // Undo
+        undo() {
+            if (!this.canUndo) return;
+
+            this.history.future.unshift(this.history.present);
+            this.history.present = this.history.past.pop();
+
+            this.applyState(this.history.present);
+        },
+
+        // Redo
+        redo() {
+            if (!this.canRedo) return;
+
+            this.history.past.push(this.history.present);
+            this.history.present = this.history.future.shift();
+
+            this.applyState(this.history.present);
+        },
+
+        // Застосовуємо стан
+        applyState(state) {
+            this.tasks = JSON.parse(JSON.stringify(state.tasks));
+            this.settings = JSON.parse(JSON.stringify(state.settings));
+            this.legend = JSON.parse(JSON.stringify(state.legend));
+            this.saveAll();
+        },
+
         onTaskDrop(taskId) {
             if (!this.dragState.draggedId || this.dragState.draggedId === taskId || this.dragState.source !== 'task') return;
 
@@ -392,12 +457,14 @@ createApp({
             }
 
             this.clearForm();
+            this.saveState();
             this.saveTasks(); // Залишаємо і localStorage для швидкості
         },
 
         deleteTask(taskId) {
             if (confirm(this.t('confirm_delete'))) {
                 this.tasks = this.tasks.filter(task => task.id !== taskId);
+                this.saveState();
                 this.saveTasks();
             }
         },
@@ -803,6 +870,7 @@ createApp({
         this.loadAll();
         this.applyTheme();
         this.syncRowHeights();
+        this.saveState();
 
 
         // Set default dates if not set

@@ -14,6 +14,9 @@
         <div class="header-main">
             <h1 class="app-title">{{ t('app_title') }}</h1>
             <div class="header-controls">
+                <button @click="undo" class="btn-icon" :disabled="!canUndo" :title="t('undo')">↶</button>
+                <button @click="redo" class="btn-icon" :disabled="!canRedo" :title="t('redo')">↷</button>
+
                 <div class="control-group">
                     <label>{{ t('language') }}</label>
                     <select v-model="ui.lang" @change="saveUI">
