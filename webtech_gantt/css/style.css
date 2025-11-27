@@ -53,6 +53,84 @@ body {
     display: none;
 }
 
+/* Accessibility Styles */
+.visually-hidden {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+}
+
+.skip-link {
+    position: absolute;
+    top: -40px;
+    left: 6px;
+    background: var(--primary-color);
+    color: white;
+    padding: 8px;
+    text-decoration: none;
+    border-radius: 0 0 4px 4px;
+    z-index: 10000;
+    font-weight: 600;
+}
+
+.skip-link:focus {
+    top: 0;
+}
+
+/* Focus styles for better keyboard navigation */
+.btn:focus,
+.btn-icon:focus,
+.theme-toggle:focus,
+select:focus,
+input:focus,
+[contenteditable="true"]:focus,
+.task-bar:focus {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+/* Better focus indicators for interactive elements */
+.btn-icon:focus-visible,
+.theme-toggle:focus-visible {
+    background-color: var(--bg-tertiary);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.3);
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    :root {
+        --border-color: #000000;
+        --shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+    }
+
+    .task-bar {
+        border: 1px solid #000000;
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+
+    .today-indicator {
+        animation: none;
+    }
+
+    .task-bar {
+        transition: none;
+    }
+}
+
 /* Layout */
 #app {
     min-height: 100vh;
@@ -103,7 +181,7 @@ body {
 
 .current-date {
     font-size: 0.875rem;
-    color: var(--text-muted);
+    color: #1e293b;
 }
 
 .app-main {
@@ -116,7 +194,7 @@ body {
 .tasks-header,
 .timeline-header {
     height: 3rem;
-    flex-shrink: 0; /* Забороняємо стискання */
+    flex-shrink: 0;
 }
 
 /* Sidebar */
@@ -194,31 +272,12 @@ body {
     box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
-/* Змінюємо рамку при зміні кольору */
 .form-group input[type="color"]:not([value="#3b82f6"]) {
-    border-color: currentColor; /* Бере колір з value */
+    border-color: currentColor;
 }
 
-/* Для темної теми - трошки світліша рамка */
 [data-theme="dark"] .form-group input[type="color"]:not([value="#3b82f6"]) {
     border-color: color-mix(in srgb, currentColor 70%, white 30%);
-}
-
-.color-input-wrapper {
-    position: relative;
-}
-
-.color-input-wrapper::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    border: 2px solid;
-    border-radius: 0.375rem;
-    pointer-events: none;
-    transition: border-color 0.3s ease;
 }
 
 .form-actions {
@@ -235,6 +294,7 @@ body {
     font-size: 0.875rem;
     cursor: pointer;
     transition: all 0.2s;
+    font-weight: 500;
 }
 
 .btn-primary {
@@ -263,11 +323,22 @@ body {
     cursor: pointer;
     color: var(--text-secondary);
     border-radius: 0.25rem;
+    transition: all 0.2s;
 }
 
 .btn-icon:hover {
     background: var(--bg-tertiary);
     color: var(--text-primary);
+}
+
+.btn-icon:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.btn-icon:not(:disabled):hover {
+    background: var(--bg-tertiary);
+    color: var(--primary-color);
 }
 
 .theme-toggle {
@@ -277,6 +348,12 @@ body {
     padding: 0.5rem;
     cursor: pointer;
     font-size: 1rem;
+    transition: all 0.2s;
+}
+
+.theme-toggle:focus {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
 }
 
 /* Legend */
@@ -315,6 +392,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
+    font-weight: bold;
 }
 
 .btn-add {
@@ -325,6 +403,7 @@ body {
     border-radius: 0.375rem;
     cursor: pointer;
     margin-top: 0.5rem;
+    transition: all 0.2s;
 }
 
 .btn-add:hover {
@@ -332,7 +411,141 @@ body {
     color: white;
 }
 
+/* Tasks Container */
+.tasks-container {
+    width: 300px;
+    background: var(--bg-primary);
+    border-right: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+}
 
+.tasks-container .tasks-list,
+.gantt-container .gantt-body {
+    height: calc(100% - 3rem);
+}
+
+.tasks-header {
+    height: 3rem;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    padding: 0 1rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.tasks-list {
+    flex: 1;
+    overflow-y: auto;
+}
+
+.task-row {
+    display: flex;
+    align-items: center;
+    min-height: 3rem;
+    border-bottom: 1px solid var(--border-color);
+    padding: 0.5rem 1rem;
+    margin: 0;
+    transition: all 0.2s ease;
+    cursor: grab;
+}
+
+.task-row:active {
+    cursor: grabbing;
+}
+
+.task-row.drag-over {
+    background-color: var(--accent-soft);
+    border: 2px dashed var(--primary-color);
+    transform: scale(1.02);
+}
+
+.task-row.dragging {
+    opacity: 0.5;
+    background-color: var(--bg-tertiary);
+}
+
+.task-row::before {
+    content: '⋮⋮';
+    color: var(--text-muted);
+    margin-right: 0.5rem;
+    font-size: 0.8rem;
+    cursor: grab;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.task-row:hover::before {
+    opacity: 1;
+}
+
+.task-row:active::before {
+    opacity: 1;
+    color: var(--primary-color);
+}
+
+.task-row--highlight {
+    background: rgba(255, 255, 0, 0.1);
+}
+
+.task-info {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 3rem;
+    flex: 1;
+}
+
+.task-name {
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+    line-height: 1.2;
+}
+
+.task-dates {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    line-height: 1.2;
+}
+
+.task-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    margin-top: 0.25rem;
+    line-height: 1;
+}
+
+.task-tag {
+    background: #1e40af;
+    color: #ffffff;
+    padding: 0.125rem 0.375rem;
+    border-radius: 0.75rem;
+    font-size: 0.7rem;
+    line-height: 1;
+    font-weight: 600;
+}
+
+.task-actions {
+    padding: 0 1rem;
+    display: flex;
+    gap: 0.25rem;
+}
+
+/* Gantt Container */
+.gantt-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-primary);
+    margin: 0;
+    border-radius: 0;
+    box-shadow: none;
+    overflow: hidden;
+    border-left: none;
+}
 
 .timeline-header {
     display: grid;
@@ -364,39 +577,37 @@ body {
 }
 
 .timeline-cell--today {
-    background-color: var(--today-color) !important;
+    background: #dc2626 !important;
     color: white !important;
-    font-weight: bold;
+    font-weight: 700;
+    box-shadow: 0 2px 4px rgba(220, 38, 38, 0.3);
+    z-index: 2;
+    position: relative;
 }
 
-.timeline-cell--today::after {
-    content: '';
-    position: absolute;
-    bottom: -2px;
-    left: 0;
-    right: 0;
-    height: 2px;
-    background-color: var(--today-color);
+[data-theme="dark"] .timeline-cell--today {
+    background: #dc2626 !important;
+    color: white !important;
+    box-shadow: 0 2px 8px rgba(220, 38, 38, 0.5);
 }
 
 .timeline-cell:hover {
     background-color: var(--bg-tertiary);
 }
 
-.today-marker {
-    display: none; /* Hide the vertical line */
+.today-indicator {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    font-size: 0.6rem;
+    animation: pulse 2s infinite;
+    color: white;
 }
 
-.today-label {
-    position: absolute;
-    top: -1.5rem;
-    left: -1rem;
-    background: var(--today-color);
-    color: white;
-    padding: 0.25rem 0.5rem;
-    border-radius: 0.25rem;
-    font-size: 0.75rem;
-    white-space: nowrap;
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
 }
 
 .gantt-body {
@@ -411,38 +622,22 @@ body {
     height: 100%;
 }
 
+.gantt-row {
+    display: flex;
+    align-items: center;
+    min-height: 3rem;
+    border-bottom: 1px solid var(--border-color);
+    position: relative;
+    min-width: min-content;
+    margin: 0;
+}
+
+.gantt-row:hover {
+    background: var(--bg-tertiary);
+}
 
 .gantt-row--highlight {
     background: rgba(255, 255, 0, 0.1);
-}
-
-.task-info {
-    display: flex;
-    flex-direction: column;
-    justify-content: center; /* Вертикальне центрування контенту */
-    min-height: 3rem;
-}
-
-.task-name {
-    font-weight: 600;
-    margin-bottom: 0.25rem;
-    line-height: 1.2;
-}
-
-.task-dates {
-    font-size: 0.75rem;
-    color: var(--text-muted);
-    line-height: 1.2;
-}
-
-.task-dates [contenteditable="true"] {
-    border: 1px dashed transparent;
-    transition: all 0.2s;
-}
-
-.task-dates [contenteditable="true"]:focus {
-    border-color: var(--primary-color);
-    background: rgba(37, 99, 235, 0.05);
 }
 
 .task-timeline {
@@ -459,41 +654,15 @@ body {
     min-width: min-content;
 }
 
-.timeline-scroll-sync {
-    overflow-x: auto;
-    overflow-y: hidden;
-}
-
-.timeline-header::-webkit-scrollbar,
-.gantt-body::-webkit-scrollbar {
-    height: 8px;
-}
-
-.timeline-header::-webkit-scrollbar-track,
-.gantt-body::-webkit-scrollbar-track {
-    background: var(--bg-tertiary);
-}
-
-.timeline-header::-webkit-scrollbar-thumb:hover,
-.gantt-body::-webkit-scrollbar-thumb:hover {
-    background: var(--text-muted);
-}
-
-.timeline-header::-webkit-scrollbar-thumb,
-.gantt-body::-webkit-scrollbar-thumb {
-    background: var(--border-color);
-    border-radius: 4px;
-}
-
 .task-bar {
     position: absolute;
-    height: 2rem; /* Трошки менше за висоту рядка */
+    height: 2rem;
     border-radius: 0.25rem;
     cursor: pointer;
     transition: all 0.2s;
     min-width: 20px;
     top: 50%;
-    transform: translateY(-50%); /* Центруємо по вертикалі */
+    transform: translateY(-50%);
 }
 
 .task-bar:hover {
@@ -514,7 +683,7 @@ body {
     right: 0;
     bottom: 0;
     display: flex;
-    align-items: center; /* Вертикальне центрування */
+    align-items: center;
     justify-content: space-between;
     padding: 0 0.5rem;
     font-size: 0.75rem;
@@ -534,23 +703,62 @@ body {
     margin-left: 0.5rem;
 }
 
-.task-actions {
-    padding: 0 1rem;
-    display: flex;
-    gap: 0.25rem;
-}
-
 /* Content Editable */
 [contenteditable="true"] {
     outline: none;
     border-radius: 0.25rem;
     padding: 0.125rem 0.25rem;
     transition: background-color 0.2s;
+    border: 1px dashed transparent;
 }
 
 [contenteditable="true"]:focus {
     background: rgba(37, 99, 235, 0.1);
     box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+    border-color: var(--primary-color);
+}
+
+.date-editable {
+    border: 1px dashed transparent;
+    border-radius: 0.25rem;
+    padding: 0.125rem 0.25rem;
+    transition: all 0.2s;
+    min-width: 70px;
+    display: inline-block;
+    text-align: center;
+    position: relative;
+}
+
+.date-editable:focus {
+    border-color: var(--primary-color);
+    background: rgba(37, 99, 235, 0.05);
+    outline: none;
+}
+
+.date-editable:hover {
+    border-color: var(--border-color);
+}
+
+/* Scrollbars */
+.timeline-header::-webkit-scrollbar,
+.gantt-body::-webkit-scrollbar {
+    height: 8px;
+}
+
+.timeline-header::-webkit-scrollbar-track,
+.gantt-body::-webkit-scrollbar-track {
+    background: var(--bg-tertiary);
+}
+
+.timeline-header::-webkit-scrollbar-thumb,
+.gantt-body::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 4px;
+}
+
+.timeline-header::-webkit-scrollbar-thumb:hover,
+.gantt-body::-webkit-scrollbar-thumb:hover {
+    background: var(--text-muted);
 }
 
 /* Print Controls */
@@ -582,7 +790,6 @@ body {
         min-width: 50px;
     }
 
-
     .sidebar {
         width: 100%;
         border-right: none;
@@ -602,6 +809,10 @@ body {
     .header-controls {
         flex-wrap: wrap;
     }
+
+    .tasks-container {
+        width: 100%;
+    }
 }
 
 @media print {
@@ -620,262 +831,8 @@ body {
         box-shadow: none;
         border-radius: 0;
     }
-}
 
-.task-tags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.25rem;
-    margin-top: 0.25rem;
-    line-height: 1;
-}
-
-.task-tag {
-    background: var(--accent-soft);
-    color: var(--accent);
-    padding: 0.125rem 0.375rem;
-    border-radius: 0.75rem;
-    font-size: 0.7rem;
-    line-height: 1;
-}
-
-.today-indicator {
-    position: absolute;
-    top: 2px;
-    right: 2px;
-    font-size: 0.6rem;
-    animation: pulse 2s infinite;
-    color: white;
-}
-
-@keyframes pulse {
-    0% { opacity: 1; }
-    50% { opacity: 0.5; }
-    100% { opacity: 1; }
-}
-
-/* Enhanced today cell styling */
-.timeline-cell--today {
-    background: linear-gradient(135deg, var(--today-color), #ff6b6b) !important;
-    color: white !important;
-    font-weight: 700;
-    box-shadow: 0 2px 4px rgba(220, 38, 38, 0.3);
-    z-index: 2;
-    position: relative;
-}
-
-/* Different styling for dark theme */
-[data-theme="dark"] .timeline-cell--today {
-    background: linear-gradient(135deg, var(--today-color), #dc2626) !important;
-    color: white !important;
-    box-shadow: 0 2px 8px rgba(220, 38, 38, 0.5);
-}
-
-/* Новий контейнер для завдань */
-.tasks-container {
-    width: 300px;
-    background: var(--bg-primary);
-    border-right: 1px solid var(--border-color);
-    display: flex;
-    flex-direction: column;
-}
-
-.tasks-container .tasks-list,
-.gantt-container .gantt-body {
-    height: calc(100% - 3rem); /* Враховуємо header */
-}
-
-.task-row,
-.gantt-row {
-    align-items: stretch; /* Займають всю доступну висоту */
-}
-
-.tasks-list,
-.gantt-body {
-    overflow-y: auto;
-    scrollbar-width: thin;
-}
-
-.tasks-header {
-    height: 3rem;
-    background: var(--bg-secondary);
-    border-bottom: 1px solid var(--border-color);
-    display: flex;
-    align-items: center;
-    padding: 0 1rem;
-    font-weight: 600;
-    color: var(--text-secondary);
-}
-
-.tasks-list {
-    flex: 1;
-    overflow-y: auto;
-}
-
-.task-row {
-    display: flex;
-    align-items: center;
-    min-height: 3rem;
-    border-bottom: 1px solid var(--border-color);
-    padding: 0.5rem 1rem;
-    margin: 0;
-}
-
-
-
-.task-row {
-    transition: all 0.2s ease;
-    cursor: grab;
-}
-
-.task-row:active {
-    cursor: grabbing;
-}
-
-.task-row.drag-over {
-    background-color: var(--accent-soft);
-    border: 2px dashed var(--primary-color);
-    transform: scale(1.02);
-}
-
-.task-row.dragging {
-    opacity: 0.5;
-    background-color: var(--bg-tertiary);
-}
-
-/* Drag handle indicator */
-.task-row::before {
-    content: '⋮⋮';
-    color: var(--text-muted);
-    margin-right: 0.5rem;
-    font-size: 0.8rem;
-    cursor: grab;
-    opacity: 0;
-    transition: opacity 0.2s;
-}
-
-.task-row:hover::before {
-    opacity: 1;
-}
-
-.task-row:active::before {
-    opacity: 1;
-    color: var(--primary-color);
-}
-
-
-
-
-.task-row--highlight {
-    background: rgba(255, 255, 0, 0.1);
-}
-
-/* Оновлений гантт-контейнер */
-.gantt-container {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    background: var(--bg-primary);
-    margin: 0; /* Змінили з 1rem 1rem 1rem 0 */
-    border-radius: 0; /* Змінили з 0.5rem */
-    box-shadow: none; /* Змінили з var(--shadow) */
-    overflow: hidden;
-    border-left: none; /* Додали для відокремлення */
-}
-
-.task-row:hover,
-.gantt-row:hover {
-    background: var(--bg-tertiary);
-}
-
-.task-row--highlight,
-.gantt-row--highlight {
-    background: rgba(255, 255, 0, 0.1);
-}
-
-
-/* Прибрати task-info з гантт-ряду */
-.gantt-row {
-    display: flex;
-    align-items: center;
-    min-height: 3rem; /* Така ж висота як у task-row */
-    border-bottom: 1px solid var(--border-color);
-    position: relative;
-    min-width: min-content;
-    margin: 0; /* Прибираємо марджини */
-}
-
-/* Видалити старий task-info */
-.gantt-row .task-info {
-    display: none;
-}
-
-/* Додайте в style.css */
-.date-editable {
-    border: 1px dashed transparent;
-    border-radius: 0.25rem;
-    padding: 0.125rem 0.25rem;
-    transition: all 0.2s;
-    min-width: 70px;
-    display: inline-block;
-    text-align: center;
-    position: relative;
-}
-
-.date-editable:focus {
-    border-color: var(--primary-color);
-    background: rgba(37, 99, 235, 0.05);
-    outline: none;
-}
-
-.date-editable:hover {
-    border-color: var(--border-color);
-}
-
-.date-editable::after {
-    content: 'DD.MM.YYYY';
-    position: absolute;
-    top: -20px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: var(--text-primary);
-    color: var(--bg-primary);
-    padding: 2px 6px;
-    border-radius: 3px;
-    font-size: 0.6rem;
-    white-space: nowrap;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.2s;
-}
-
-.date-editable:focus::after {
-    opacity: 1;
-}
-
-/* Стилі для кнопок undo/redo */
-.btn-icon:disabled {
-    opacity: 0.3;
-    cursor: not-allowed;
-}
-
-.btn-icon:not(:disabled):hover {
-    background: var(--bg-tertiary);
-    color: var(--primary-color);
-}
-
-/* Спеціальні стилі для стрілочок */
-.undo-redo-buttons {
-    display: flex;
-    gap: 0.25rem;
-}
-
-.undo-redo-buttons .btn-icon {
-    font-size: 1.2rem;
-    font-weight: bold;
-    width: 2rem;
-    height: 2rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    .skip-link {
+        display: none !important;
+    }
 }

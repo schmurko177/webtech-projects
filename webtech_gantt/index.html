@@ -8,39 +8,62 @@
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
 </head>
 <body>
+<!-- Skip to main content link -->
+<a href="#main-content" class="skip-link visually-hidden">{{ t('skip_to_content') }}</a>
+
 <div id="app" v-cloak>
     <!-- Header -->
-    <header class="app-header">
+    <header class="app-header" role="banner">
         <div class="header-main">
             <h1 class="app-title">{{ t('app_title') }}</h1>
-            <div class="header-controls">
-                <button @click="undo" class="btn-icon" :disabled="!canUndo" :title="t('undo')">↶</button>
-                <button @click="redo" class="btn-icon" :disabled="!canRedo" :title="t('redo')">↷</button>
-
+            <div class="header-controls" role="toolbar" :aria-label="t('app_controls')">
+                <!-- Undo/Redo -->
                 <div class="control-group">
-                    <label>{{ t('language') }}</label>
-                    <select v-model="ui.lang" @change="saveUI">
+                    <button @click="undo" class="btn-icon" :disabled="!canUndo"
+                            :title="t('undo')" :aria-label="t('undo')">
+                        ↶
+                    </button>
+                    <button @click="redo" class="btn-icon" :disabled="!canRedo"
+                            :title="t('redo')" :aria-label="t('redo')">
+                        ↷
+                    </button>
+                </div>
+
+                <!-- Language -->
+                <div class="control-group">
+                    <label for="language-select">{{ t('language') }}</label>
+                    <select id="language-select" v-model="ui.lang" @change="saveUI"
+                            :aria-label="t('language')">
                         <option value="sk">SK</option>
                         <option value="en">EN</option>
                     </select>
                 </div>
+
+                <!-- Theme -->
                 <div class="control-group">
-                    <label>{{ t('theme') }}</label>
-                    <button @click="toggleTheme" class="theme-toggle">
+                    <label for="theme-toggle">{{ t('theme') }}</label>
+                    <button id="theme-toggle" @click="toggleTheme" class="theme-toggle"
+                            :aria-label="t('toggle_theme')" :aria-pressed="ui.theme === 'dark'">
                         {{ ui.theme === 'light' ? '🌙' : '☀️' }}
                     </button>
                 </div>
+
+                <!-- Zoom -->
                 <div class="control-group">
-                    <label>{{ t('zoom') }}</label>
-                    <select v-model="ui.zoom" @change="saveUI">
+                    <label for="zoom-select">{{ t('zoom') }}</label>
+                    <select id="zoom-select" v-model="ui.zoom" @change="saveUI"
+                            :aria-label="t('zoom')">
                         <option value="day">{{ t('day') }}</option>
                         <option value="week">{{ t('week') }}</option>
                         <option value="month">{{ t('month') }}</option>
                         <option value="quarter">{{ t('quarter') }}</option>
                     </select>
                 </div>
+
+                <!-- Today -->
                 <div class="control-group">
-                    <button @click="scrollToToday" class="btn btn-secondary" :title="t('scroll_to_today')">
+                    <button @click="scrollToToday" class="btn btn-secondary"
+                            :title="t('scroll_to_today')" :aria-label="t('scroll_to_today')">
                         📍 {{ t('today') }}
                     </button>
                 </div>
@@ -52,51 +75,52 @@
     </header>
 
     <!-- Main Content -->
-    <main class="app-main">
+    <main id="main-content" class="app-main" role="main" tabindex="-1">
         <!-- Sidebar -->
-        <aside class="sidebar">
+        <aside class="sidebar" role="complementary" :aria-label="t('sidebar')">
             <!-- Date Range -->
-            <section class="sidebar-section">
-                <h3>{{ t('date_range') }}</h3>
+            <section class="sidebar-section" aria-labelledby="date-range-heading">
+                <h3 id="date-range-heading">{{ t('date_range') }}</h3>
                 <div class="form-group">
-                    <label>{{ t('start_date') }}</label>
-                    <input type="date" v-model="settings.startDate" @change="saveSettings">
+                    <label for="start-date">{{ t('start_date') }}</label>
+                    <input id="start-date" type="date" v-model="settings.startDate" @change="saveSettings">
                 </div>
                 <div class="form-group">
-                    <label>{{ t('end_date') }}</label>
-                    <input type="date" v-model="settings.endDate" @change="saveSettings">
+                    <label for="end-date">{{ t('end_date') }}</label>
+                    <input id="end-date" type="date" v-model="settings.endDate" @change="saveSettings">
                 </div>
             </section>
 
             <!-- Task Form -->
-            <section class="sidebar-section">
-                <h3>{{ editingTask ? t('edit_task') : t('add_task') }}</h3>
+            <section class="sidebar-section" aria-labelledby="task-form-heading">
+                <h3 id="task-form-heading">{{ editingTask ? t('edit_task') : t('add_task') }}</h3>
                 <div class="form-group">
-                    <label>{{ t('task_name') }}</label>
-                    <input type="text" v-model="taskForm.name" :placeholder="t('task_name_placeholder')">
+                    <label for="task-name">{{ t('task_name') }}</label>
+                    <input id="task-name" type="text" v-model="taskForm.name"
+                           :placeholder="t('task_name_placeholder')" :aria-required="true">
                 </div>
                 <div class="form-row">
                     <div class="form-group">
-                        <label>{{ t('start_date') }}</label>
-                        <input type="date" v-model="taskForm.start">
+                        <label for="task-start">{{ t('start_date') }}</label>
+                        <input id="task-start" type="date" v-model="taskForm.start">
                     </div>
                     <div class="form-group">
-                        <label>{{ t('end_date') }}</label>
-                        <input type="date" v-model="taskForm.end">
+                        <label for="task-end">{{ t('end_date') }}</label>
+                        <input id="task-end" type="date" v-model="taskForm.end">
                     </div>
                 </div>
                 <div class="form-group">
-                    <label>{{ t('progress') }}</label>
-                    <input type="range" v-model.number="taskForm.progress" min="0" max="100">
+                    <label for="task-progress">{{ t('progress') }}</label>
+                    <input id="task-progress" type="range" v-model.number="taskForm.progress" min="0" max="100">
                     <span>{{ taskForm.progress }}%</span>
                 </div>
                 <div class="form-group">
-                    <label>{{ t('color') }}</label>
-                    <input type="color" v-model="taskForm.color">
+                    <label for="task-color">{{ t('color') }}</label>
+                    <input id="task-color" type="color" v-model="taskForm.color">
                 </div>
                 <div class="form-group">
-                    <label>{{ t('tags') }}</label>
-                    <input type="text" v-model="taskForm.tags" :placeholder="t('tags_placeholder')">
+                    <label for="task-tags">{{ t('tags') }}</label>
+                    <input id="task-tags" type="text" v-model="taskForm.tags" :placeholder="t('tags_placeholder')">
                 </div>
                 <div class="form-actions">
                     <button @click="saveTask" class="btn btn-primary">
@@ -112,15 +136,15 @@
             </section>
 
             <!-- Search & Filter -->
-            <section class="sidebar-section">
-                <h3>{{ t('search_filter') }}</h3>
+            <section class="sidebar-section" aria-labelledby="search-filter-heading">
+                <h3 id="search-filter-heading">{{ t('search_filter') }}</h3>
                 <div class="form-group">
-                    <label>{{ t('search') }}</label>
-                    <input type="text" v-model="filters.search" :placeholder="t('search_placeholder')">
+                    <label for="search-input">{{ t('search') }}</label>
+                    <input id="search-input" type="text" v-model="filters.search" :placeholder="t('search_placeholder')">
                 </div>
                 <div class="form-group">
-                    <label>{{ t('filter_by_tag') }}</label>
-                    <select v-model="filters.tag">
+                    <label for="tag-filter">{{ t('filter_by_tag') }}</label>
+                    <select id="tag-filter" v-model="filters.tag" :aria-label="t('filter_by_tag')">
                         <option value="">{{ t('all_tags') }}</option>
                         <option v-for="tag in allTags" :value="tag">{{ tag }}</option>
                     </select>
@@ -128,40 +152,55 @@
             </section>
 
             <!-- Import/Export -->
-            <section class="sidebar-section">
-                <h3>{{ t('import_export') }}</h3>
+            <section class="sidebar-section" aria-labelledby="import-export-heading">
+                <h3 id="import-export-heading">{{ t('import_export') }}</h3>
                 <div class="form-actions">
-                    <button @click="saveTasksToFile" class="btn btn-primary">{{ t('save_to_file') }}</button>
-                    <button @click="exportData" class="btn btn-secondary">{{ t('export') }}</button>
-                    <button @click="importData" class="btn btn-secondary">{{ t('import') }}</button>
-                    <input type="file" ref="importFile" @change="handleImport" accept=".json" style="display: none;">
+                    <button @click="saveTasksToFile" class="btn btn-primary" :aria-label="t('save_to_file')">
+                        {{ t('save_to_file') }}
+                    </button>
+                    <button @click="exportData" class="btn btn-secondary" :aria-label="t('export')">
+                        {{ t('export') }}
+                    </button>
+                    <button @click="importData" class="btn btn-secondary" :aria-label="t('import')">
+                        {{ t('import') }}
+                    </button>
+                    <input type="file" ref="importFile" @change="handleImport" accept=".json" style="display: none;"
+                           :aria-label="t('import_file')">
                 </div>
             </section>
 
             <!-- Legend -->
-            <section class="sidebar-section">
-                <h3>{{ t('legend') }}</h3>
-                <div class="legend-list">
-                    <div v-for="(item, index) in legend" :key="item.id" class="legend-item">
-                        <input type="color" v-model="item.color" @change="saveLegend">
+            <section class="sidebar-section" aria-labelledby="legend-heading">
+                <h3 id="legend-heading">{{ t('legend') }}</h3>
+                <div class="legend-list" role="list" :aria-label="t('legend_list')">
+                    <div v-for="(item, index) in legend" :key="item.id" class="legend-item" role="listitem">
+                        <input type="color" v-model="item.color" @change="saveLegend"
+                               :aria-label="t('legend_color')">
                         <input type="text" v-model="item.label" @blur="saveLegend"
-                               :placeholder="t('legend_placeholder')">
-                        <button @click="removeLegendItem(index)" class="btn-remove">×</button>
+                               :placeholder="t('legend_placeholder')" :aria-label="t('legend_label')">
+                        <button @click="removeLegendItem(index)" class="btn-remove"
+                                :aria-label="t('remove_legend_item')">×</button>
                     </div>
-                    <button @click="addLegendItem" class="btn-add">{{ t('add_category') }}</button>
+                    <button @click="addLegendItem" class="btn-add" :aria-label="t('add_category')">
+                        {{ t('add_category') }}
+                    </button>
                 </div>
             </section>
         </aside>
 
-        <!-- NEW: Tasks Container for task names -->
-        <section class="tasks-container">
+        <!-- Tasks Container -->
+        <section class="tasks-container" role="region" :aria-labelledby= "'tasks-heading'" >
             <div class="tasks-header">
+                <h2 id="tasks-heading" class="visually-hidden">{{ t('tasks') }}</h2>
                 <div class="task-header-placeholder">{{ t('tasks') }}</div>
             </div>
-            <div class="tasks-list">
-                <div v-for="task in filteredTasks" :key="task.id"
+            <div class="tasks-list" role="list" :aria-label="t('tasks_list')">
+                <div v-for="(task, index) in filteredTasks" :key="task.id"
                      class="task-row"
                      :class="{ 'task-row--highlight': isTaskHighlighted(task) }"
+                     role="listitem"
+                     :aria-label="t('task_item', { name: task.name, index: index + 1, total: filteredTasks.length })"
+                     :aria-selected="isTaskHighlighted(task)"
                      draggable="true"
                      @dragstart="onTaskDragStart(task.id)"
                      @dragover.prevent="onTaskDragOver(task.id)"
@@ -172,89 +211,117 @@
                     <div class="task-info">
                         <div class="task-name" contenteditable="true"
                              @blur="updateTaskProperty(task, 'name', $event)"
-                             @keydown.enter="$event.target.blur()">
+                             @keydown.enter="$event.target.blur()"
+                             :aria-label="t('edit_task_name')"
+                             tabindex="0">
                             {{ task.name }}
                         </div>
                         <div class="task-dates">
-                    <span class="date-editable"
-                          contenteditable="true"
-                          @blur="updateTaskDate(task, 'start', $event)"
-                          @keydown.enter="$event.target.blur()"
-                          @keydown.escape="cancelDateEdit($event)">
-                        {{ formatDate(task.start) }}
-                    </span>
+                                <span class="date-editable"
+                                      contenteditable="true"
+                                      @blur="updateTaskDate(task, 'start', $event)"
+                                      @keydown.enter="$event.target.blur()"
+                                      @keydown.escape="cancelDateEdit($event)"
+                                      :aria-label="t('edit_start_date')"
+                                      tabindex="0">
+                                    {{ formatDate(task.start) }}
+                                </span>
                             -
                             <span class="date-editable"
                                   contenteditable="true"
                                   @blur="updateTaskDate(task, 'end', $event)"
                                   @keydown.enter="$event.target.blur()"
-                                  @keydown.escape="cancelDateEdit($event)">
-                        {{ formatDate(task.end) }}
-                    </span>
+                                  @keydown.escape="cancelDateEdit($event)"
+                                  :aria-label="t('edit_end_date')"
+                                  tabindex="0">
+                                    {{ formatDate(task.end) }}
+                                </span>
                         </div>
-                        <div class="task-tags">
-                    <span v-for="tag in task.tags" :key="tag" class="task-tag">
-                        {{ tag }}
-                    </span>
+                        <div class="task-tags" role="list" :aria-label="t('task_tags')">
+                                <span v-for="tag in task.tags" :key="tag" class="task-tag" role="listitem">
+                                    {{ tag }}
+                                </span>
                         </div>
                     </div>
 
                     <div class="task-actions">
-                        <button @click="editTask(task)" class="btn-icon" :title="t('edit')">✎</button>
-                        <button @click="deleteTask(task.id)" class="btn-icon" :title="t('delete')">×</button>
+                        <button @click="editTask(task)" class="btn-icon"
+                                :title="t('edit')" :aria-label="t('edit_task')">
+                            ✎
+                        </button>
+                        <button @click="deleteTask(task.id)" class="btn-icon"
+                                :title="t('delete')" :aria-label="t('delete_task')">
+                            ×
+                        </button>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- Gantt Chart - тільки timeline + бари -->
-        <section class="gantt-container">
+        <!-- Gantt Chart -->
+        <section class="gantt-container" role="region" :aria-labelledby="'gantt-chart-heading'">
+            <h2 id="gantt-chart-heading" class="visually-hidden">{{ t('gantt_chart') }}</h2>
+
             <!-- Timeline Header -->
-            <div class="timeline-header" ref="timelineHeader" @scroll="syncScroll">
-                <div class="timeline-header-inner" :style="timelineGridStyles">
-                    <div v-for="cell in timelineCells"
-                         :key="cell.key"
+            <div class="timeline-header" ref="timelineHeader" @scroll="syncScroll"
+                 role="rowgroup" :aria-label="t('timeline_header')">
+                <div class="timeline-header-inner" :style="timelineGridStyles" role="row">
+                    <div v-for="cell in timelineCells" :key="cell.key"
                          class="timeline-cell"
                          :class="{ 'timeline-cell--today': cell.isToday }"
-                         :title="cell.isToday ? t('today') : ''">
+                         role="columnheader"
+                         :aria-label="cell.isToday ? t('today_cell', { label: cell.label }) : cell.label"
+                         :aria-current="cell.isToday ? 'date' : null">
                         {{ cell.label }}
-                        <span v-if="cell.isToday" class="today-indicator">●</span>
+                        <span v-if="cell.isToday" class="today-indicator" aria-hidden="true">●</span>
                     </div>
                 </div>
             </div>
 
-            <!-- Gantt Body - тільки бари завдань -->
-            <div class="gantt-body" ref="ganttBody" @scroll="syncScroll">
+            <!-- Gantt Body -->
+            <div class="gantt-body" ref="ganttBody" @scroll="syncScroll"
+                 role="rowgroup" :aria-label="t('gantt_tasks')">
                 <div class="gantt-body-inner" :style="timelineGridStyles">
-                    <div v-for="task in filteredTasks" :key="task.id"
+                    <div v-for="(task, index) in filteredTasks" :key="task.id"
                          class="gantt-row"
-                         :class="{ 'gantt-row--highlight': isTaskHighlighted(task) }">
+                         :class="{ 'gantt-row--highlight': isTaskHighlighted(task) }"
+                         role="row"
+                         :aria-label="t('gantt_task', { name: task.name, progress: task.progress })">
 
-                        <!-- Task Bar Area -->
                         <div class="task-timeline">
                             <div class="task-bar-container">
                                 <div class="task-bar"
                                      :style="getTaskBarStyle(task)"
+                                     role="progressbar"
+                                     :aria-valuenow="task.progress"
+                                     :aria-valuemin="0"
+                                     :aria-valuemax="100"
+                                     :aria-label="t('task_progress', { name: task.name, progress: task.progress })"
                                      draggable="true"
                                      @dragstart="onDragStart(task.id)"
                                      @dragover.prevent="onDragOver(task.id)"
-                                     @drop="onDrop(task.id)">
+                                     @drop="onDrop(task.id)"
+                                     tabindex="0">
 
                                     <div class="task-progress" :style="{ width: task.progress + '%' }"></div>
 
                                     <div class="task-bar-content">
-                                    <span class="task-bar-name"
-                                          contenteditable="true"
-                                          @blur="updateTaskProperty(task, 'name', $event)"
-                                          @keydown.enter="$event.target.blur()">
-                                        {{ task.name }}
-                                    </span>
+                                            <span class="task-bar-name"
+                                                  contenteditable="true"
+                                                  @blur="updateTaskProperty(task, 'name', $event)"
+                                                  @keydown.enter="$event.target.blur()"
+                                                  :aria-label="t('edit_task_name')"
+                                                  tabindex="0">
+                                                {{ task.name }}
+                                            </span>
                                         <span class="task-bar-progress"
                                               contenteditable="true"
                                               @blur="updateTaskProperty(task, 'progress', $event, true)"
-                                              @keydown.enter="$event.target.blur()">
-                                        {{ task.progress }}%
-                                    </span>
+                                              @keydown.enter="$event.target.blur()"
+                                              :aria-label="t('edit_task_progress')"
+                                              tabindex="0">
+                                                {{ task.progress }}%
+                                            </span>
                                     </div>
                                 </div>
                             </div>
@@ -265,13 +332,15 @@
         </section>
     </main>
 
-    <!-- Print Button -->
-    <div class="print-controls">
-        <label>
-            <input type="checkbox" v-model="ui.printShowDate">
+    <!-- Print Controls -->
+    <div class="print-controls" role="region" :aria-label="t('print_controls')">
+        <label for="print-date-checkbox">
+            <input id="print-date-checkbox" type="checkbox" v-model="ui.printShowDate">
             {{ t('show_date_print') }}
         </label>
-        <button @click="printChart" class="btn btn-primary">{{ t('print') }}</button>
+        <button @click="printChart" class="btn btn-primary" :aria-label="t('print_chart')">
+            {{ t('print') }}
+        </button>
     </div>
 </div>
 
