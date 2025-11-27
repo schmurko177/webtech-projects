@@ -515,17 +515,48 @@ createApp({
                 return;
             }
 
-            // Спроба парсингу дати
-            const date = new Date(value);
+            // Спроба парсингу дати з урахуванням європейського формату (DD/MM/YYYY)
+            let date;
+
+            // Перевіряємо європейський формат (DD/MM/YYYY або DD.MM.YYYY)
+            const europeanFormat = value.match(/^(\d{1,2})[\/\.](\d{1,2})[\/\.](\d{4})$/);
+
+            if (europeanFormat) {
+                const day = parseInt(europeanFormat[1]);
+                const month = parseInt(europeanFormat[2]) - 1; // Місяці в JS: 0-11
+                const year = parseInt(europeanFormat[3]);
+
+                date = new Date(year, month, day);
+
+                // Перевіряємо чи дата валідна (наприклад, не 31.02.2025)
+                if (date.getDate() !== day || date.getMonth() !== month || date.getFullYear() !== year) {
+                    date = new Date(value); // Пробуємо стандартний парсер
+                }
+            } else {
+                // Спроба стандартного парсингу
+                date = new Date(value);
+            }
+
+            // Якщо дата невалідна - відновити старе значення
             if (isNaN(date.getTime())) {
-                // Якщо дата невалідна - відновити старе значення
                 event.target.innerText = this.formatDate(task[property]);
                 return;
             }
 
-            // Оновити значення
-            task[property] = date.toISOString().split('T')[0];
+            // Форматуємо дату у правильний формат YYYY-MM-DD
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const formattedDate = `${year}-${month}-${day}`;
+
+            // Оновлюємо значення
+            task[property] = formattedDate;
             this.saveTasks();
+
+            // Оновлюємо відображення
+            this.$nextTick(() => {
+                event.target.innerText = this.formatDate(formattedDate);
+            });
         },
 
 // Відміна редагування по Escape
@@ -537,14 +568,19 @@ createApp({
         formatDate(dateString) {
             try {
                 const date = new Date(dateString);
-                if (isNaN(date.getTime())) return dateString;
+                if (isNaN(date.getTime())) {
+                    console.warn('Invalid date:', dateString);
+                    return dateString;
+                }
 
+                // Для європейського формату використовуємо крапку як роздільник
                 return date.toLocaleDateString(this.ui.lang, {
                     day: '2-digit',
                     month: '2-digit',
                     year: 'numeric'
-                });
+                }).replace(/\//g, '.'); // Замінюємо слеші на крапки
             } catch (error) {
+                console.error('Date formatting error:', error);
                 return dateString;
             }
         },

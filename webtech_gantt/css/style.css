@@ -819,6 +819,7 @@ body {
     min-width: 70px;
     display: inline-block;
     text-align: center;
+    position: relative;
 }
 
 .date-editable:focus {
@@ -829,4 +830,25 @@ body {
 
 .date-editable:hover {
     border-color: var(--border-color);
+}
+
+.date-editable::after {
+    content: 'DD.MM.YYYY';
+    position: absolute;
+    top: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--text-primary);
+    color: var(--bg-primary);
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 0.6rem;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+}
+
+.date-editable:focus::after {
+    opacity: 1;
 }
